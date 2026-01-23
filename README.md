@@ -59,20 +59,21 @@ on peut représenter NN par un graphe: un layer = un noeud
 
 appliquer un GNN
 
-# Projet de Maîtrise : Optimisation d'Architecture Neuronale par GNN-Predictor
+encoder avec un GNN
 
-## 1. Concept Fondamental
+
+### 1. Concept Fondamental
 Contrairement aux approches classiques qui encodent un réseau de neurones sous forme de vecteur plat (perte d'information topologique), ce projet propose une **représentation basée sur les graphes**. 
 
 L'objectif est d'utiliser un **Graph Neural Network (GNN)** comme "Prédicteur de Performance" (Predictor-Based NAS). Ce GNN apprendra à estimer la précision (`Accuracy`) d'une architecture candidate à partir de sa topologie, sans avoir à l'entraîner, accélérant exponentiellement la phase de recherche.
 
 ---
 
-## 2. Formalisation Mathématique de l'Encodage
+### 2. Formalisation Mathématique de l'Encodage
 
 Une architecture neuronale est modélisée comme un graphe orienté acyclique (DAG) défini par le tuple $G = (A, X)$.
 
-### A. La Matrice d'Adjacence ($A$) - La Topologie
+#### A. La Matrice d'Adjacence ($A$) - La Topologie
 Elle représente les connexions entre les couches (flux de données). Pour un réseau de $N$ nœuds (couches), $A \in \{0,1\}^{N \times N}$.
 
 $$
@@ -85,7 +86,7 @@ $$
 
 *Note : Pour garantir l'acyclicité (DAG), $A$ est généralement contrainte à être triangulaire supérieure ($i < j$).*
 
-### B. La Matrice des Caractéristiques ($X$) - Les Opérations
+#### B. La Matrice des Caractéristiques ($X$) - Les Opérations
 Elle décrit la nature et les hyperparamètres de chaque couche. Pour $N$ nœuds et $F$ caractéristiques, $X \in \mathbb{R}^{N \times F}$.
 Chaque ligne $X_i$ est un vecteur hybride combinant encodage One-Hot et valeurs continues normalisées :
 
@@ -94,35 +95,35 @@ X_i = [\underbrace{t_1, t_2, ..., t_k}_{\text{Type (One-Hot)}}, \underbrace{p_1,
 $$
 
 *Exemple pour une couche $i$ de type "Conv3x3" :*
-$$ X_i = [0, 1, 0, 0, \ 3, 1, 64] $$
+$X_i = [0, 1, 0, 0, \ 3, 1, 64]$
 *(Où les types sont : Identity, Conv, Pool, Linear... et les params : Kernel=3, Stride=1, Filters=64).*
 
 ---
 
-## 3. Pipeline du Projet (Méthodologie)
+### 3. Pipeline du Projet (Méthodologie)
 
 Le projet se divise en trois phases distinctes :
 
-### Phase 1 : Collecte de Données (Ground Truth)
+#### Phase 1 : Collecte de Données (Ground Truth)
 * Génération aléatoire de $K$ architectures (graphes $(A, X)$).
 * Entraînement réel (rapide) de ces architectures sur un dataset (ex: CIFAR-10) pour obtenir leur précision réelle $y$.
 * Constitution du dataset d'entraînement du prédicteur : $\mathcal{D} = \{(G_i, y_i)\}_{i=1}^K$.
 
-### Phase 2 : Entraînement du Prédicteur GNN
+#### Phase 2 : Entraînement du Prédicteur GNN
 * Architecture : Utilisation d'un GNN performant (ex: **GIN** - Graph Isomorphism Network) capable de capter les structures graphiques.
 * Objectif : Minimiser l'erreur de prédiction (MSE) :
-    $$ \mathcal{L} = \frac{1}{K} \sum_{i=1}^K (f_{GNN}(A_i, X_i) - y_i)^2 $$
+    $\mathcal{L} = \frac{1}{K} \sum_{i=1}^K (f_{GNN}(A_i, X_i) - y_i)^2$
 * Le GNN apprend que certaines structures (ex: "Skip Connections") corrèlent avec une haute précision.
 
-### Phase 3 : Recherche par Métaheuristique (Inférence)
+#### Phase 3 : Recherche par Métaheuristique (Inférence)
 * Utilisation d'un algorithme évolutionnaire (Algorithme Génétique ou Recuit Simulé).
 * **Fonction de Fitness :** Au lieu d'entraîner le réseau candidat, on passe son graphe $(A, X)$ dans le GNN entraîné.
-    $$ \text{Score} = f_{GNN}(A_{candidat}, X_{candidat}) $$
+    $\text{Score} = f_{GNN}(A_{candidat}, X_{candidat})$
 * **Temps d'évaluation :** Quelques millisecondes vs heures d'entraînement.
 
 ---
 
-## 4. Stack Technique & Faisabilité
+### 4. Stack Technique & Faisabilité
 
 * **Langage :** Python.
 * **Deep Learning :** PyTorch.
@@ -130,3 +131,7 @@ Le projet se divise en trois phases distinctes :
 ??
 * **Graph Library :** **PyTorch Geometric (PyG)** (Standard industriel pour gérer les inputs `Data(x=X, edge_index=A)`).
 * **Avantage Académique :** Cette approche respecte l'invariance par permutation des graphes (si on mélange l'ordre des nœuds sans changer les liens, le GNN donne le même score, contrairement à un MLP sur vecteur plat).
+
+### Résumé idée
+
+NN=>encodage (A,X) => métaheur (A',X')=> (GNN =>) décodage => (entrainement =>) test
