@@ -87,7 +87,7 @@ $$
 *Note : Pour garantir l'acyclicité (DAG), $A$ est généralement contrainte à être triangulaire supérieure ($i < j$).*
 
 
-Dans notre cas, les réseaux de neurones sont assez peu connectés (généralement un  noeud vers juste un autre, ou deux), il est donc mieux de représenter sous fourmat de vecteur de couple $[{0,1},{1,2},{0,2},...]$
+Dans notre cas, les réseaux de neurones sont assez peu connectés (généralement un  noeud vers juste un autre, ou deux), il est donc mieux de représenter sous fourmat de vecteur de couple $[(0,1),(1,2),(0,2),...]$
 
 #### B. La Matrice des Caractéristiques ($X$) - Les Opérations
 Elle décrit la nature et les hyperparamètres de chaque couche. Pour $N$ nœuds et $F$ caractéristiques, $X \in \mathbb{R}^{N \times F}$.
