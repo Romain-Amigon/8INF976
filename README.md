@@ -87,7 +87,7 @@ $$
 *Note : Pour garantir l'acyclicité (DAG), $A$ est généralement contrainte à être triangulaire supérieure ($i < j$).*
 
 
-Dans notre cas, les réseaux de neurones sont assez peu connectés (généralement un  noeud vers juste un autre, ou deux), il est donc mieux de représenter sous fourmat de vecteur de couple $[(0,1),(1,2),(0,2),...]$
+Dans notre cas, les réseaux de neurones sont assez peu connectés (généralement un  noeud vers juste un autre, ou deux), il est donc mieux de représenter sous fourmat de vecteur de couple $[(0,1),(1,2),(0,2),...]$ (meilleur que dictionnaire pour GNN)
 
 #### B. La Matrice des Caractéristiques ($X$) - Les Opérations
 Elle décrit la nature et les hyperparamètres de chaque couche. Pour $N$ nœuds et $F$ caractéristiques, $X \in \mathbb{R}^{N \times F}$.
@@ -138,3 +138,13 @@ Le projet se divise en trois phases distinctes :
 ### Résumé idée
 
 NN=>encodage (A,X) => métaheur (A',X')=> (GNN =>) décodage => (entrainement =>) test
+
+
+## Ce que j'ai fait
+
+class Linearcfg, Convcfg,... des classes qui servent de conteneurs pour les paramètres des layers.
+
+la classe DynamicNet qui peut traduire une liste des classes CFG en NN pytorch, ainsi que des méthodes qui renvoient les poids sous forme de vecteur 1D, et la réciproque charge un vecteur 1D dans les poids des neurones.
+
+
+Etant donné qu'un NN =(A,X,W) avec A le graphe d'adjacence, X l'encodage de chaque layer et W les poids on peut enregistrer le modele sous format npz et le charger afin de pouvoir partager facilement 

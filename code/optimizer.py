@@ -293,119 +293,225 @@ class DynamicNet(nn.Module):
         new_layers, _ = process_recursive(layers, dummy_input)
         return new_layers
 
-    def _encode_config_to_vector(self, cfg):
-        """
-        Transforme une configuration de couche en un vecteur numérique (Features X).
-        Vecteur de taille 15 :
-        [0-7] : One-Hot Encoding du Type (Conv, Linear, Pool, BN, Drop, Flat, Res, Autre)
-        [8]   : Kernel Size (normalisé /7)
-        [9]   : Stride (normalisé /4)
-        [10]  : Padding (normalisé /4)
-        [11]  : In_Channels/Features (normalisé /1024)
-        [12]  : Out_Channels/Features (normalisé /1024)
-        [13]  : Dropout Probability
-        [14]  : Flag 'Use Projection' (pour ResBlock)
-        """
-        vec = np.zeros(
-        FEATURE_SIZE, dtype=np.float32)
+    def _encode_config_to_vector(self, cfg, sub_layer_count=0):
+        vec = np.zeros(FEATURE_SIZE, dtype=np.float32)
         
-        # --- PARTIE 1 : TYPES (Indices 0 à 7) ---
+        
         if isinstance(cfg, Conv2dCfg):
             vec[0] = 1
-            # Params spécifiques
             vec[8] = cfg.kernel_size / 7.0 if hasattr(cfg, 'kernel_size') else 0
             vec[9] = cfg.stride / 4.0 if hasattr(cfg, 'stride') else 0
             vec[10] = cfg.padding / 4.0 if hasattr(cfg, 'padding') else 0
+            vec[14] = 1.0 if cfg.activation is not None else 0.0
             
         elif isinstance(cfg, LinearCfg):
             vec[1] = 1
+            vec[14] = 1.0 if cfg.activation is not None else 0.0
             
         elif isinstance(cfg, (MaxPool2dCfg, GlobalAvgPoolCfg)):
             vec[2] = 1
-            if hasattr(cfg, 'kernel_size'):
-                vec[8] = cfg.kernel_size / 7.0
-            if hasattr(cfg, 'stride'):
-                vec[9] = cfg.stride / 4.0
-                
+            if hasattr(cfg, 'kernel_size'): vec[8] = cfg.kernel_size / 7.0
+            if hasattr(cfg, 'stride'): vec[9] = cfg.stride / 4.0
+            
         elif isinstance(cfg, (BatchNorm1dCfg, BatchNorm2dCfg)):
             vec[3] = 1
             if hasattr(cfg, 'num_features'):
-                # BN conserve le nombre de features, on le met en In et Out
                 vec[11] = cfg.num_features / 1024.0
                 vec[12] = cfg.num_features / 1024.0
-
+                
         elif isinstance(cfg, DropoutCfg):
             vec[4] = 1
             vec[13] = cfg.p
-            
         elif isinstance(cfg, FlattenCfg):
             vec[5] = 1
-            
         elif isinstance(cfg, ResBlockCfg):
             vec[6] = 1
             vec[14] = 1.0 if cfg.use_projection else 0.0
-            # Note: Le contenu du ResBlock est géré par la récursion du graphe, 
-            # ici on encode juste le "conteneur".
-            
+            vec[8] = float(sub_layer_count)
         else:
-            vec[7] = 1 # Type inconnu/Autre
+            vec[7] = 1
 
-        # --- PARTIE 2 : PARAMETRES COMMUNS (Canaux) ---
-        # On essaie de récupérer in_channels/features de manière générique
-        if hasattr(cfg, 'in_channels'):
-            vec[11] = cfg.in_channels / 1024.0
-        elif hasattr(cfg, 'in_features'):
-            vec[11] = cfg.in_features / 1024.0
-            
-        if hasattr(cfg, 'out_channels'):
-            vec[12] = cfg.out_channels / 1024.0
-        elif hasattr(cfg, 'out_features'):
-            vec[12] = cfg.out_features / 1024.0
+        if hasattr(cfg, 'in_channels'): vec[11] = cfg.in_channels / 1024.0
+        elif hasattr(cfg, 'in_features'): vec[11] = cfg.in_features / 1024.0
+        
+        if hasattr(cfg, 'out_channels'): vec[12] = cfg.out_channels / 1024.0
+        elif hasattr(cfg, 'out_features'): vec[12] = cfg.out_features / 1024.0
             
         return vec
     
+    
     def get_graph_matrix(self):
-        """
-        Transforme la layers_cfg (arbre) en matrices A et X (graphe plat).
-        """
-        features_list = [] # Deviendra X
-        edges_list = []    # Deviendra A (format COO: [src, dst])
-        
         node_counter = 0
         
-        def traverse(configs, previous_node_idx):
+        def process_block(configs, start_node_idx):
             nonlocal node_counter
-            last_node_idx = previous_node_idx
+            local_features = []
+            local_edges = []
+            current_prev_node = start_node_idx
             
             for cfg in configs:
+                node_counter += 1
+                this_node_idx = node_counter
+                
                 if isinstance(cfg, ResBlockCfg):
-                    input_node_of_block = last_node_idx
+                    child_feats, child_edges, last_child_idx = process_block(cfg.sub_layers, this_node_idx)
                     
-                    output_node_of_block = traverse(cfg.sub_layers, input_node_of_block)
+                    block_children_count = len(cfg.sub_layers)
+                    parent_vec = self._encode_config_to_vector(cfg, sub_layer_count=block_children_count)
                     
+                    local_features.append(parent_vec)
+                    local_features.extend(child_feats)
+                    
+                    local_edges.append([current_prev_node, this_node_idx])
+                    local_edges.extend(child_edges)
+                    local_edges.append([this_node_idx, last_child_idx])
+                    
+                    current_prev_node = last_child_idx
+                else:
+                    vec = self._encode_config_to_vector(cfg)
+                    local_features.append(vec)
+                    local_edges.append([current_prev_node, this_node_idx])
+                    current_prev_node = this_node_idx
+            
+            return local_features, local_edges, current_prev_node
 
-                    edges_list.append([input_node_of_block, output_node_of_block])
+        input_vec = np.zeros(FEATURE_SIZE, dtype=np.float32)
+        input_vec[7] = 1 
+        
+        feats, edges, _ = process_block(self.layers_cfg, 0)
+        final_features = [input_vec] + feats
+        
+        return np.array(final_features), np.array(edges).T
+    
+    def save_model(self, filename):
+        features_x, adj_a = self.get_graph_matrix() 
+        weights_w = self.flatten_weights(to_numpy=True)
+
+        np.savez_compressed(
+            filename, 
+            adj=adj_a,      
+            features=features_x,
+            weights=weights_w            
+        )
+        print(f"Model saved as: {filename}.npz")
+
+    @staticmethod
+    def _vector_to_single_config(vec):
+        type_idx = np.argmax(vec[0:8])
+        
+        k = int(round(vec[8] * 7.0))
+        s = int(round(vec[9] * 4.0))
+        p = int(round(vec[10] * 4.0))
+        c_in = int(round(vec[11] * 1024.0)) if vec[11] > 0 else 0
+        c_out = int(round(vec[12] * 1024.0)) if vec[12] > 0 else 0
+        prob = float(vec[13])
+
+        has_activation = (vec[14] > 0.5)
+        act_fn = nn.ReLU if has_activation else None
+        
+        if type_idx == 0: 
+            return Conv2dCfg(in_channels=c_in, out_channels=c_out, kernel_size=k, stride=s, padding=p, activation=act_fn)
+            
+        elif type_idx == 1: 
+            return LinearCfg(in_features=c_in, out_features=c_out, activation=act_fn)
+            
+        elif type_idx == 2: 
+            if k == 0: return GlobalAvgPoolCfg()
+            return MaxPool2dCfg(kernel_size=k, stride=s, padding=p)
+            
+        elif type_idx == 3: 
+            return BatchNorm2dCfg(num_features=c_in)
+            
+        elif type_idx == 4:
+            return DropoutCfg(p=prob)
+        elif type_idx == 5:
+            return FlattenCfg()
+            
+        return None
+
+    @staticmethod
+    def decode_matrix(features_x, adj_a=None):
+        if isinstance(features_x, torch.Tensor): features_x = features_x.cpu().numpy()
+        
+        rows = [features_x[i] for i in range(1, features_x.shape[0])]
+        
+        def parse_recursive(available_rows):
+            configs = []
+            while len(available_rows) > 0:
+                vec = available_rows.pop(0)
+                type_idx = np.argmax(vec[0:8])
+                
+                if type_idx == 6: 
+                    count_children = int(vec[8]) 
+                    use_proj = (vec[14] > 0.5)
                     
-                    last_node_idx = output_node_of_block
+                    sub_block_cfgs = []
+                    for _ in range(count_children):
+                        sub_block_cfgs.extend(parse_recursive(available_rows))
+                        
+                        if len(sub_block_cfgs) >= count_children:
+                            break 
+                            
+                    real_sub_cfgs = sub_block_cfgs[:count_children]
+                    configs.append(ResBlockCfg(sub_layers=real_sub_cfgs, use_projection=use_proj))
                     
                 else:
-                    node_counter += 1
-                    current_node_idx = node_counter
-                    
-                    feat_vector = self._encode_config_to_vector(cfg)
-                    features_list.append(feat_vector)
-                    
-                    edges_list.append([last_node_idx, current_node_idx])
-                    
-                    last_node_idx = current_node_idx
+                    cfg = DynamicNet._vector_to_single_config(vec)
+                    if cfg:
+                        configs.append(cfg)
+                    return configs 
             
-            return last_node_idx
+            return configs
 
+        def improved_parser(rows_queue):
+            configs = []
+            while len(rows_queue) > 0:
+                vec = rows_queue[0]
+                type_idx = np.argmax(vec[0:8])
+                
+                if type_idx == 6:
+                    rows_queue.pop(0)
+                    count_direct_children = int(vec[8])
+                    use_proj = (vec[14] > 0.5)
+                    
+                    sub_layers = []
+                    for _ in range(count_direct_children):
+                        child_cfgs = improved_parser(rows_queue)
+                        if child_cfgs:
+                            sub_layers.append(child_cfgs[0])
+                    
+                    configs.append(ResBlockCfg(sub_layers=sub_layers, use_projection=use_proj))
+                else:
+                    rows_queue.pop(0)
+                    cfg = DynamicNet._vector_to_single_config(vec)
+                    if cfg:
+                        configs.append(cfg)
+                        return configs 
+            return configs
 
-        features_list.append([0]*FEATURE_SIZE) 
-        traverse(self.layers_cfg, 0)
+        final_configs = []
+        while len(rows) > 0:
+            res = improved_parser(rows)
+            if res:
+                final_configs.extend(res)
+                
+        return final_configs
+
+    @staticmethod
+    def load_model(filename):
+        data = np.load(f"{filename}.npz")
+        X = data['features']
+        W = data['weights']  
         
-        return np.array(edges_list), np.array(features_list)
+        reconstructed_cfgs = DynamicNet.decode_matrix(X)
+        model = DynamicNet(reconstructed_cfgs)
+        
+        try:
+            model.load_flattened_weights(W)
+        except Exception:
+            pass
+            
+        return model
 
         
 
@@ -437,3 +543,11 @@ net=DynamicNet(layers)
 print(net)
 
 print(net.get_graph_matrix())
+print(net.get_graph_matrix()[0].shape)
+print(net.get_graph_matrix()[1].shape)
+
+net.save_model('test')
+
+net2=DynamicNet.load_model('test')
+print(net)
+print(net2)
