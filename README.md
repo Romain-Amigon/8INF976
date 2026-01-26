@@ -55,6 +55,9 @@ cherche meilleur réseau selon des critères
 
 ## Idées
 
+L'idée est que les hyperparamètres d'un NN, donc l'architecture et les caractéristiques des layers sont des variables, et on peut donc représenter les NN comme une fonction qui prend en argument l'architecture A, les poids W, et le dataset de test X pour dooner les prédictions Y : $f(A,W)(X)= Y$, la backpropargation ne modifie que W, en fonction de l'erreur, mais il doit etre possible de déterminer A grâce à des méthodes d'optimisation comme les métaheuristiques, de plus sous contrainte de Pareto pour le temps d'inférence principalement. 
+
+
 on peut représenter NN par un graphe: un layer = un noeud
 
 appliquer un GNN
