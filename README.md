@@ -151,3 +151,11 @@ la classe DynamicNet qui peut traduire une liste des classes CFG en NN pytorch, 
 
 
 Etant donné qu'un NN =(A,X,W) avec A le graphe d'adjacence, X l'encodage de chaque layer et W les poids on peut enregistrer le modele sous format npz et le charger afin de pouvoir partager facilement 
+
+
+
+## RDV
+
+### RDV 26/01
+Ok pour ce que j'ai fait
+objectif : faire librairy avec quelques algo et les vérifier via benchmark
