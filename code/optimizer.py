@@ -13,7 +13,9 @@ import copy
 from abc import ABC, abstractmethod
 from layer_classes import Conv2dCfg, DropoutCfg, FlattenCfg, LinearCfg, MaxPool2dCfg, GlobalAvgPoolCfg, BatchNorm1dCfg, BatchNorm2dCfg, ResBlockCfg
 import torch.nn as nn
-
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+import torch
 DEFAULT_SEARCH_SPACE = {
     'max_depth': 10,
     'min_depth': 2,
@@ -26,7 +28,7 @@ DEFAULT_SEARCH_SPACE = {
 
 class Optimizer(ABC):
 
-    def __init__(self, layer,s search_space=DEFAULT_SEARCH_SPACE              
+    def __init__(self, layers, search_space=DEFAULT_SEARCH_SPACE              
                  ,  dataset=None):
         self.search_space = search_space # {CNN : False, max_kernel_size = 11, max_features_linear= 100, ...}
         self.dataset = dataset
@@ -35,20 +37,57 @@ class Optimizer(ABC):
         self.best_score = -float('inf')
         self.layers=layers
 
-    def evaluate(self, genome):
+    def evaluate(self, genome, train_epochs=1):
+        try:
 
-        model = DynamicNet.decode_matrix(X)
-        
-        score = 0
+            input_shape = (3, 32, 32) 
+            model = DynamicNet(genome, input_shape=input_shape)
+            
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            model.to(device)
+            
+            if self.dataset is None:
+                inputs = torch.randn(64, 3, 32, 32)
+                targets = torch.randint(0, 2, (64,))
+                train_loader = DataLoader(TensorDataset(inputs, targets), batch_size=16)
+            else:
+                train_loader = self.dataset
 
+            optimizer = optim.Adam(model.parameters(), lr=0.001)
+            criterion = nn.CrossEntropyLoss()
             
-        # Logique de sauvegarde du meilleur absolu
-        if score > self.best_score:
-            self.best_score = score
-            self.best_arch = genome
-            print(f"   >>> New Best Found: {score:.4f}")
+            model.train()
+            total_loss = 0
+            correct = 0
+            total = 0
             
-        return score
+            for epoch in range(train_epochs):
+                for inputs, targets in train_loader:
+                    inputs, targets = inputs.to(device), targets.to(device)
+                    
+                    optimizer.zero_grad()
+                    outputs = model(inputs)
+                    loss = criterion(outputs, targets)
+                    loss.backward()
+                    optimizer.step()
+                    
+                    total_loss += loss.item()
+                    _, predicted = outputs.max(1)
+                    total += targets.size(0)
+                    correct += predicted.eq(targets).sum().item()
+
+            accuracy = 100. * correct / total
+            
+            if accuracy > self.best_score:
+                self.best_score = accuracy
+                self.best_arch = genome
+                print(f"   >>> New Best Found: Acc {accuracy:.2f}% | Loss {total_loss:.4f}")
+            
+            return accuracy
+
+        except Exception as e:
+            print(f"Architecture invalide générée : {e}")
+            return -float('inf')
     
     def neighbor(self, current_configs):
         """
@@ -222,8 +261,8 @@ class GeneticOptimizer(Optimizer):
             pass
 
 class SAOptimizer(Optimizer):
-    def __init__(self, search_space=DEFAULT_SEARCH_SPACE , temp_init=100, cooling_rate=0.95, **kwargs):
-        super().__init__(search_space, **kwargs)
+    def __init__(self,layers=None, search_space=DEFAULT_SEARCH_SPACE , temp_init=100, cooling_rate=0.95, **kwargs):
+        super().__init__(layers,search_space, **kwargs)
         self.T = temp_init
         self.alpha = cooling_rate
 
@@ -234,7 +273,7 @@ class SAOptimizer(Optimizer):
         
         for i in range(n_iterations):
             # 1. Voisinage (Mutation légère)
-            neighbor = self.neighbors(current_sol)
+            neighbor = self.neighbor(current_sol)
             neighbor_score = self.evaluate(neighbor)
             
             # 2. Critère d'acceptation (Metropolis)
@@ -245,6 +284,7 @@ class SAOptimizer(Optimizer):
             
             # 3. Refroidissement
             self.T *= self.alpha
+        return current_sol
 
     
 layers = []
@@ -285,6 +325,84 @@ print(net2)
 """
 #def random_sol(max_depth, )
 
-opti = SAOptimizer()
+opti = SAOptimizer(layers)
 
 print(DynamicNet(opti.neighbor(layers)))
+
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
+
+# Importez vos classes ici si elles sont dans un autre fichier
+# from model import DynamicNet
+# from optimizer import SAOptimizer
+# from layer_classes import *
+
+def run_test():
+    print("=== 1. Génération du Dataset Factice ===")
+    # On simule 100 images de 32x32 avec 3 canaux (RGB) pour une classification binaire
+    # Batch size = 10
+    X_train = torch.randn(100, 3, 32, 32)
+    y_train = torch.randint(0, 2, (100,)) # Labels 0 ou 1
+    
+    # Création du DataLoader
+    dataset = DataLoader(TensorDataset(X_train, y_train), batch_size=10, shuffle=True)
+    print("Dataset créé : 100 images (3, 32, 32)")
+
+    print("\n=== 2. Définition de l'Architecture Initiale ===")
+    depth=3
+    layers.append(Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU))
+    layers.append(BatchNorm2dCfg(num_features=16)) 
+    for _ in range(depth):
+    
+        sub_block = [
+            Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU),
+            BatchNorm2dCfg(num_features=16),
+            Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=None) 
+        ]
+            
+    
+        layers.append(ResBlockCfg(sub_layers=sub_block))
+        layers.append(BatchNorm2dCfg(num_features=16)) 
+    
+    
+            
+    layers.append(GlobalAvgPoolCfg())
+    layers.append(LinearCfg(in_features=5, out_features=2, activation=None))
+    
+    net=DynamicNet(layers)
+    print(f"Architecture de départ valide. Params: {net.count_parameters()}")
+
+    print("\n=== 3. Lancement de l'Optimisation (Recuit Simulé) ===")
+    # On lance une recherche très courte (5 itérations) pour tester
+    optimizer = SAOptimizer(
+        layers=layers,
+        dataset=dataset,
+        temp_init=10,       # Température initiale
+        cooling_rate=0.5,   # Refroidissement rapide pour le test
+    )
+
+    # Lancement de la boucle
+    # Cela va afficher "Accept" ou "Reject" et le score (Accuracy)
+    best_genome = optimizer.run(n_iterations=5)
+
+    print("\n=== 4. Validation du Résultat ===")
+    print("Construction du modèle final issu de la recherche...")
+    
+    # On instancie le modèle final avec l'input shape pour calculer les dimensions
+    final_model = DynamicNet(best_genome, input_shape=(3, 32, 32))
+    
+    # Test d'inférence (Forward pass)
+    dummy_input = torch.randn(1, 3, 32, 32)
+    try:
+        output = final_model(dummy_input)
+        print("✅ Succès ! Le modèle final a réussi une passe avant (forward).")
+        print(f"Shape de sortie : {output.shape} (Attendu: [1, 2])")
+        print(f"Nombre de paramètres : {final_model.count_parameters()}")
+        print("\nStructure finale du réseau :")
+        print(final_model)
+    except Exception as e:
+        print(f"❌ Erreur lors de l'inférence du modèle final : {e}")
+
+if __name__ == "__main__":
+    run_test()
