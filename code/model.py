@@ -403,38 +403,3 @@ class DynamicNet(nn.Module):
         
 
 
-layers = []
-
-depth=3
-layers.append(Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU))
-layers.append(BatchNorm2dCfg(num_features=16)) 
-for _ in range(depth):
-
-    sub_block = [
-        Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU),
-        BatchNorm2dCfg(num_features=16),
-        Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=None) 
-    ]
-        
-
-    layers.append(ResBlockCfg(sub_layers=sub_block))
-    layers.append(BatchNorm2dCfg(num_features=16)) 
-
-
-        
-layers.append(GlobalAvgPoolCfg())
-layers.append(LinearCfg(in_features=0, out_features=2, activation=None))
-
-net=DynamicNet(layers)
-
-print(net)
-
-print(net.get_graph())
-print(net.get_graph()[0].shape)
-print(net.get_graph()[1])
-
-net.save_model('test')
-
-net2=DynamicNet.load_model('test')
-print(net)
-print(net2)
