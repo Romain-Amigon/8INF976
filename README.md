@@ -143,6 +143,20 @@ Le projet se divise en trois phases distinctes :
 NN=>encodage (A,X) => métaheur (A',X')=> (GNN =>) décodage => (entrainement =>) test
 
 
+### Idées métaheuristiques
+
+Représenter A par liste d'adjacence : { 1:[2,3], ...}
+
+
+mutation : 
+    -ajout connection
+    -modification paramètres layer
+    -ajout/supprime layer
+
+score : 
+    -précision
+    -temps d'inférence
+
 ## Ce que j'ai fait
 
 class Linearcfg, Convcfg,... des classes qui servent de conteneurs pour les paramètres des layers.
@@ -152,7 +166,7 @@ la classe DynamicNet qui peut traduire une liste des classes CFG en NN pytorch, 
 
 Etant donné qu'un NN =(A,X,W) avec A le graphe d'adjacence, X l'encodage de chaque layer et W les poids on peut enregistrer le modele sous format npz et le charger afin de pouvoir partager facilement 
 
-
+J'ai condensé la matrice A dans la matrice X. l'intérêt de A était de connaitre la connexion entre les layers, généralement n -> n+1, SAUF si il y a un ResBlock, si dans la matrice X nous indiquons qu'il y a un Res block pour les h prochaines lignes alors le graphe d'adjence devient inutile et X contient toutes les informations nécessaires.
 
 ## RDV
 

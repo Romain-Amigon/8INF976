@@ -26,19 +26,18 @@ DEFAULT_SEARCH_SPACE = {
 
 class Optimizer(ABC):
 
-    def __init__(self, search_space=DEFAULT_SEARCH_SPACE              
+    def __init__(self, layer,s search_space=DEFAULT_SEARCH_SPACE              
                  ,  dataset=None):
         self.search_space = search_space # {CNN : False, max_kernel_size = 11, max_features_linear= 100, ...}
         self.dataset = dataset
         self.history = [] 
         self.best_arch = None
         self.best_score = -float('inf')
+        self.layers=layers
 
     def evaluate(self, genome):
 
-        # 1. Conversion Génome -> Graphe
-        # (On suppose ici que vous avez une méthode statique ou helper pour ça)
-        # features, adj = self.search_space.genome_to_graph(genome)
+        model = DynamicNet.decode_matrix(X)
         
         score = 0
 
@@ -229,13 +228,13 @@ class SAOptimizer(Optimizer):
         self.alpha = cooling_rate
 
     def run(self, n_iterations):
-        print(f"--- Starting Simulated Annealing ---")
-        current_sol = self.search_space.random_arch()
+        print(f"Starting Simulated Annealing")
+        current_sol = copy.deepcopy(layers)
         current_score = self.evaluate(current_sol)
         
         for i in range(n_iterations):
             # 1. Voisinage (Mutation légère)
-            neighbor = self.search_space.mutate(current_sol)
+            neighbor = self.neighbors(current_sol)
             neighbor_score = self.evaluate(neighbor)
             
             # 2. Critère d'acceptation (Metropolis)
