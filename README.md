@@ -168,6 +168,39 @@ Etant donné qu'un NN =(A,X,W) avec A le graphe d'adjacence, X l'encodage de cha
 
 J'ai condensé la matrice A dans la matrice X. l'intérêt de A était de connaitre la connexion entre les layers, généralement n -> n+1, SAUF si il y a un ResBlock, si dans la matrice X nous indiquons qu'il y a un Res block pour les h prochaines lignes alors le graphe d'adjence devient inutile et X contient toutes les informations nécessaires.
 
+
+### Benchmark
+
+Un dichier py qui fonctionne pour tous les optimisateurs et teste :
+classification par modèle linéaire sur make_moons
+régression par modèle linéaire sur make_regression
+CNN simple et CNN avec res block sur mnist
+
+On réecrit la fonction evaluate de l'optimiseur.
+
+Pour obtenir des stats précis on fait une boucle pour refaire l'expérience N_STATS_RUNS fois (généralement N_STATS_RUNS=10).
+
+il n'est pas rapide d'obtenir le nombre de paramètres des modèles, on compare donc les modèles avec le temps d'inférence et la différence entre le nombre de couches finale et initiale.
+
+## Résultats
+
+### Recuit Simulé
+
+BATCH_SIZE = 32
+N_SAMPLES = 500
+N_STATS_RUNS = 10 
+ITERATIONS_OPTIM = 5
+EPOCHS_TRAIN = 10
+
+================================
+TASK                   | SCORE (Avg±Std)    | GAIN     | BEST ITER  | DEPTH Δ  | INFER    | BEST SCORE  
+-------------------------------------------------------------------------------------------------------------------
+linear_regression      | -5674.54 ± 5250.39 | 8039.18  | 3.4        | +0.4     | 0.11 ms | -264.614109039
+linear_classification  | 92.40 ± 4.65       | 3.52     | 0.5        | +0.3     | 0.12 ms | 100.000000000
+cnn_simple             | 49.68 ± 18.24      | 19.10    | 2.2        | +0.3     | 1.27 ms | 98.200000000
+cnn_resblock           | 47.74 ± 18.59      | 20.46    | 2.5        | -0.2     | 0.95 ms | 95.400000000
+
+
 ## RDV
 
 ### RDV 26/01
