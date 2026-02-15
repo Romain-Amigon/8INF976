@@ -186,6 +186,7 @@ il n'est pas rapide d'obtenir le nombre de paramètres des modèles, on compare 
 
 ### Recuit Simulé
 
+```plaintext
 BATCH_SIZE        = 32
 N_SAMPLES         = 500
 N_STATS_RUNS      = 10 
@@ -200,7 +201,7 @@ linear_classification | 92.40 ± 4.65         | 3.52      | 0.5        | +0.3   
 cnn_simple            | 49.68 ± 18.24        | 19.10     | 2.2        | +0.3     | 1.27 ms  | 98.200000
 cnn_resblock          | 47.74 ± 18.59        | 20.46     | 2.5        | -0.2     | 0.95 ms  | 95.400000
 ===================================================================================================================
-
+```
 
 ## RDV
 
