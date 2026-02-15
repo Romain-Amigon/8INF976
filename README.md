@@ -182,7 +182,27 @@ Pour obtenir des stats précis on fait une boucle pour refaire l'expérience N_S
 
 il n'est pas rapide d'obtenir le nombre de paramètres des modèles, on compare donc les modèles avec le temps d'inférence et la différence entre le nombre de couches finale et initiale.
 
+```plaintext
+ SCORE (Avg ± Std)    | GAIN      | BEST ITER  | DEPTH Δ  | INFER
+ ```
+ sont les moyennes des N_STATS_RUNS itérations
+
+Best_score est le meilleur score obtenu sur les runs
+
+
 ## Résultats
+
+Fait sur
+Processeur
+
+Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz
+
+Vitesse de base :	2,50 GHz
+Sockets :	1
+Cœurs :	2
+Processeurs logiques :	4
+
+
 
 ### Recuit Simulé
 
@@ -192,6 +212,8 @@ N_SAMPLES         = 500
 N_STATS_RUNS      = 10 
 ITERATIONS_OPTIM  = 5
 EPOCHS_TRAIN      = 10
+
+ temp_init=100, cooling_rate=0.7
 
 ===================================================================================================================
 TASK                  | SCORE (Avg ± Std)    | GAIN      | BEST ITER  | DEPTH Δ  | INFER    | BEST SCORE 
@@ -203,8 +225,32 @@ cnn_resblock          | 47.74 ± 18.59        | 20.46     | 2.5        | -0.2   
 ===================================================================================================================
 ```
 
+```plaintext
+BATCH_SIZE        = 32
+N_SAMPLES         = 500
+N_STATS_RUNS      = 10 
+ITERATIONS_OPTIM  = 5
+EPOCHS_TRAIN      = 10
+
+ pop_size=50, mutation_rate=0.1, n_generations=10
+================================
+TASK                   | SCORE (Avg±Std)    | GAIN     | BEST ITER  | DEPTH Δ  | INFER    | BEST SCORE
+-------------------------------------------------------------------------------------------------------------------
+linear_regression      | -1136.28 ± 2784.46 | 12616.22 | 3.6        | +1.2     | 0.16 ms | -60.9088
+linear_classification  | 100.00 ± 0.00      | 11.74    | 0.9        | +1.1     | 0.16 ms | 100.0000
+cnn_simple             | 97.74 ± 4.33       | 68.10    | 3.2        | -1.7     | 0.59 ms | 100.0000
+cnn_resblock           | 95.94 ± 9.03       | 74.00    | 3.1        | -0.2     | 0.77 ms | 99.8000
+```
+
 ## RDV
 
-### RDV 26/01
+#### RDV 26/01
 Ok pour ce que j'ai fait
 objectif : faire librairy avec quelques algo et les vérifier via benchmark
+
+#### RDV 26/01
+RS et AG
+
+Mettre en place un systeme de recherche de contrainte temporelle (mais pas trop lourd) ?
+
+

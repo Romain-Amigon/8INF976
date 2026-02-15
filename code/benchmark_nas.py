@@ -11,7 +11,7 @@ from sklearn.datasets import make_classification, make_regression, make_moons
 from torchvision import datasets, transforms
 from layer_classes import Conv2dCfg, DropoutCfg, FlattenCfg, LinearCfg, MaxPool2dCfg, GlobalAvgPoolCfg, BatchNorm1dCfg, BatchNorm2dCfg, ResBlockCfg
 from model import DynamicNet
-from optimizer import SAOptimizer
+from optimizer import SAOptimizer, GeneticOptimizer
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 32
@@ -197,7 +197,8 @@ if __name__ == "__main__":
         }
         for i in range(N_STATS_RUNS):
             print(f"  > Run {i+1}...", end="", flush=True)
-            runner = BenchmarkWrapper(SAOptimizer, task, temp_init=100, cooling_rate=0.7)
+            #runner = BenchmarkWrapper(SAOptimizer, task, temp_init=100, cooling_rate=0.7)
+            runner = BenchmarkWrapper(GeneticOptimizer, task, pop_size=50)
             res = runner.run(ITERATIONS_OPTIM)
             if res["score"] == -float('inf'):
                 print(" FAILED")

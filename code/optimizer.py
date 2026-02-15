@@ -235,6 +235,7 @@ class SAOptimizer(Optimizer):
         }
         return self.best_arch, stats
 
+
 class GeneticOptimizer(Optimizer):
     def __init__(self, layers=None, search_space=None, pop_size=10, mutation_rate=0.1, **kwargs):
         super().__init__(layers, search_space, **kwargs)
@@ -242,10 +243,30 @@ class GeneticOptimizer(Optimizer):
         self.mutation_rate = mutation_rate
         self.population = []
 
-    def run(self, n_generations):
-        print("Starting Genetic Algorithm...")
-        self.population = [copy.deepcopy(self.layers) for _ in range(self.pop_size)]
+    def crossover(self, parent1, parent2):
+
         
+
+        if len(parent1) < 3 or len(parent2) < 3:
+            return copy.deepcopy(parent1)
+        idx1 = random.randint(1, len(parent1) - 2)
+        idx2 = random.randint(1, len(parent2) - 2)
+
+        child_layers = parent1[:idx1] + parent2[idx2:]
+        return child_layers
+
+    def run(self, n_generations):
+        
+        init_arch = copy.deepcopy(self.layers)
+        self.population = [self.neighbor(init_arch) for _ in range(self.pop_size)]
+        
+        initial_score = self.evaluate(init_arch)
+        if initial_score == -float('inf'): initial_score = 0.0
+        
+        self.best_arch = init_arch
+        self.best_score = initial_score
+        best_gen = -1
+
         for g in range(n_generations):
             scores = []
             valid_pop = []
@@ -255,151 +276,44 @@ class GeneticOptimizer(Optimizer):
                 if score > -float('inf'):
                     scores.append(score)
                     valid_pop.append(ind)
+                    
                     if score > self.best_score:
                         self.best_score = score
                         self.best_arch = copy.deepcopy(ind)
+                        best_gen = g
                         print(f"Gen {g}: New Best! Score {self.best_score:.2f}")
             
             if not valid_pop:
-                self.population = [copy.deepcopy(self.layers) for _ in range(self.pop_size)]
+                self.population = [self.neighbor(init_arch) for _ in range(self.pop_size)]
                 continue
 
             sorted_indices = np.argsort(scores)[::-1]
-            top_k = max(2, len(valid_pop) // 2)
+            top_k = max(2, int(len(valid_pop) * 0.2))
             parents = [valid_pop[i] for i in sorted_indices[:top_k]]
             
-            next_gen = parents[:]
+            next_gen = []
+            
+            next_gen.append(copy.deepcopy(parents[0]))
+            
             while len(next_gen) < self.pop_size:
-                parent = random.choice(parents)
-                child = self.neighbor(parent)
+                p1 = random.choice(parents)
+                p2 = random.choice(parents)
+                
+                child = self.crossover(p1, p2)
+                
+                if random.random() < self.mutation_rate:
+                    child = self.neighbor(child)
+                
                 next_gen.append(child)
             
             self.population = next_gen
             
-        return self.best_arch
-    
-layers = []
+        stats = {
+            "initial_score": initial_score,
+            "best_score": self.best_score,
+            "best_iter": best_gen, 
+            "gain": self.best_score - initial_score
+        }
+        return self.best_arch, stats
+ 
 
-depth=3
-layers.append(Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU))
-layers.append(BatchNorm2dCfg(num_features=16)) 
-for _ in range(depth):
-
-    sub_block = [
-        Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU),
-        BatchNorm2dCfg(num_features=16),
-        Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=None) 
-    ]
-        
-
-    layers.append(ResBlockCfg(sub_layers=sub_block))
-    layers.append(BatchNorm2dCfg(num_features=16)) 
-
-
-        
-layers.append(GlobalAvgPoolCfg())
-layers.append(LinearCfg(in_features=5, out_features=2, activation=None))
-
-net=DynamicNet(layers)
-
-print(net)
-"""
-print(net.get_graph())
-print(net.get_graph()[0].shape)
-print(net.get_graph()[1])
-
-net.save_model('test')
-
-net2=DynamicNet.load_model('test')
-print(net)
-print(net2)
-"""
-#def random_sol(max_depth, )
-
-opti = SAOptimizer(layers)
-
-print(DynamicNet(opti.neighbor(layers)))
-
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
-
-# Importez vos classes ici si elles sont dans un autre fichier
-# from model import DynamicNet
-# from optimizer import SAOptimizer
-# from layer_classes import *
-
-def run_test():
-    print("=== 1. Génération du Dataset Factice ===")
-    # On simule 100 images de 32x32 avec 3 canaux (RGB) pour une classification binaire
-    # Batch size = 10
-    X_train = torch.randn(100, 3, 32, 32)
-    y_train = torch.randint(0, 2, (100,)) # Labels 0 ou 1
-    
-    # Création du DataLoader
-    dataset = DataLoader(TensorDataset(X_train, y_train), batch_size=10, shuffle=True)
-    print("Dataset créé : 100 images (3, 32, 32)")
-
-    print("\n=== 2. Définition de l'Architecture Initiale ===")
-    depth=3
-    layers.append(Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU))
-    layers.append(BatchNorm2dCfg(num_features=16)) 
-    for _ in range(depth):
-    
-        sub_block = [
-            Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU),
-            BatchNorm2dCfg(num_features=16),
-            Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=None) 
-        ]
-            
-    
-        layers.append(ResBlockCfg(sub_layers=sub_block))
-        layers.append(BatchNorm2dCfg(num_features=16)) 
-    
-    
-            
-    layers.append(GlobalAvgPoolCfg())
-    layers.append(LinearCfg(in_features=5, out_features=2, activation=None))
-    
-    net=DynamicNet(layers)
-    print(f"Architecture de départ valide. Params: {net.count_parameters()}")
-
-    print("\n=== 3. Lancement de l'Optimisation (Recuit Simulé) ===")
-    optimizer = SAOptimizer(
-        layers=layers,
-        dataset=dataset,
-        temp_init=10,       
-        cooling_rate=0.5,   
-    )
-
-
-    best_genome = optimizer.run(n_iterations=50)
-
-    print("\n=== 4. Validation du Résultat ===")
-    print("Construction du modèle final issu de la recherche...")
-    
-    final_model = DynamicNet(best_genome, input_shape=(3, 32, 32))
-    
-    dummy_input = torch.randn(1, 3, 32, 32)
-    try:
-        output = final_model(dummy_input)
-        print("modele trouvé")
-        print(f"Shape de sortie : {output.shape} (Attendu: [1, 2])")
-        print(f"Nombre de paramètres : {final_model.count_parameters()}")
-        print("\nStructure finale du réseau :")
-        print(final_model)
-        
-        final_model.eval()
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            y_pred=final_model(X_train)
-            _, pred= torch.max(y_pred, 1)
-            total += y_pred.size(0)
-            correct += (pred == y_train).sum().item()
-        print( 100 * correct / total)
-    except Exception as e:
-        print(f"Erreur: {e}")
-
-if __name__ == "__main__":
-    run_test()
