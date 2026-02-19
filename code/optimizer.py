@@ -315,5 +315,86 @@ class GeneticOptimizer(Optimizer):
             "gain": self.best_score - initial_score
         }
         return self.best_arch, stats
+
+class ABCOptimizer(Optimizer):
+    def __init__(self, layers=None, search_space=None, pop_size=10, limit=5, **kwargs):
+        super().__init__(layers, search_space, **kwargs)
+        self.pop_size = pop_size
+        self.limit = limit
+        self.population = []
+        self.fitness = []
+        self.trials = []
+
+    def run(self, n_iterations):
+        init_arch = copy.deepcopy(self.layers)
+        initial_score = self.evaluate(init_arch)
+        if initial_score == -float('inf'): initial_score = 0.0
+        self.population = [self.neighbor(init_arch) for _ in range(self.pop_size)]
+        self.fitness = [self.evaluate(ind) for ind in self.population]
+        self.trials = [0] * self.pop_size
+
+        for i in range(self.pop_size):
+            if self.fitness[i] > self.best_score and self.fitness[i] != -float('inf'):
+                self.best_score = self.fitness[i]
+                self.best_arch = copy.deepcopy(self.population[i])
+
+        for it in range(n_iterations):
+            for i in range(self.pop_size):
+                new_arch = self.neighbor(self.population[i])
+                new_fit = self.evaluate(new_arch)
+
+                if new_fit > self.fitness[i]:
+                    self.population[i] = new_arch
+                    self.fitness[i] = new_fit
+                    self.trials[i] = 0
+                    if new_fit > self.best_score:
+                        self.best_score = new_fit
+                        self.best_arch = copy.deepcopy(new_arch)
+                else:
+                    self.trials[i] += 1
+
+            valid_fits = [f for f in self.fitness if f != -float('inf')]
+            if not valid_fits:
+                continue
+
+            min_fit = min(valid_fits)
+            shifted_fits = [f - min_fit + 1e-5 if f != -float('inf') else 0 for f in self.fitness]
+            total_fit = sum(shifted_fits)
+            probs = [f / total_fit for f in shifted_fits]
+
+            m = 0
+            i = 0
+            while m < self.pop_size:
+                if random.random() < probs[i]:
+                    m += 1
+                    new_arch = self.neighbor(self.population[i])
+                    new_fit = self.evaluate(new_arch)
+
+                    if new_fit > self.fitness[i]:
+                        self.population[i] = new_arch
+                        self.fitness[i] = new_fit
+                        self.trials[i] = 0
+                        if new_fit > self.best_score:
+                            self.best_score = new_fit
+                            self.best_arch = copy.deepcopy(new_arch)
+                    else:
+                        self.trials[i] += 1
+                i = (i + 1) % self.pop_size
+
+            for i in range(self.pop_size):
+                if self.trials[i] >= self.limit:
+                    self.population[i] = self.neighbor(init_arch)
+                    self.fitness[i] = self.evaluate(self.population[i])
+                    self.trials[i] = 0
+
+            print(f"ABC Iter {it}: Best Score {self.best_score:.2f}")
+
+        stats = {
+            "initial_score": initial_score,
+            "best_score": self.best_score,
+            "best_iter": it,
+            "gain": self.best_score - initial_score
+        }
+        return self.best_arch, stats
  
 
