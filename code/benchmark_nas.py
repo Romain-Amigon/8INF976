@@ -198,8 +198,8 @@ if __name__ == "__main__":
         for i in range(N_STATS_RUNS):
             print(f"  > Run {i+1}...", end="", flush=True)
             #runner = BenchmarkWrapper(SAOptimizer, task, temp_init=100, cooling_rate=0.7)
-            #runner = BenchmarkWrapper(GeneticOptimizer, task, pop_size=50)
-            runner = BenchmarkWrapper(ABCOptimizer, task, pop_size=20)
+            runner = BenchmarkWrapper(GeneticOptimizer, task, pop_size=50)
+            #runner = BenchmarkWrapper(ABCOptimizer, task, pop_size=20)
             res = runner.run(ITERATIONS_OPTIM)
             if res["score"] == -float('inf'):
                 print(" FAILED")

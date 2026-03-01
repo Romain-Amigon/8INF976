@@ -30,6 +30,7 @@ class Optimizer(ABC):
                 train_loader = DataLoader(TensorDataset(inputs, targets), batch_size=16)
             else:
                 train_loader = self.dataset
+                
 
             optimizer = optim.Adam(model.parameters(), lr=0.001)
             criterion = nn.CrossEntropyLoss()
@@ -255,6 +256,12 @@ class GeneticOptimizer(Optimizer):
         child_layers = parent1[:idx1] + parent2[idx2:]
         return child_layers
 
+    def tournament_selection(self, valid_pop, scores, k=3):
+            k = min(k, len(valid_pop))
+            selected_indices = random.sample(range(len(valid_pop)), k)
+            best_idx = max(selected_indices, key=lambda idx: scores[idx])
+            return copy.deepcopy(valid_pop[best_idx])
+
     def run(self, n_generations):
         
         init_arch = copy.deepcopy(self.layers)
@@ -289,15 +296,13 @@ class GeneticOptimizer(Optimizer):
 
             sorted_indices = np.argsort(scores)[::-1]
             top_k = max(2, int(len(valid_pop) * 0.2))
-            parents = [valid_pop[i] for i in sorted_indices[:top_k]]
+            next_gen = [valid_pop[i] for i in sorted_indices[:top_k]]
             
-            next_gen = []
-            
-            next_gen.append(copy.deepcopy(parents[0]))
+  
             
             while len(next_gen) < self.pop_size:
-                p1 = random.choice(parents)
-                p2 = random.choice(parents)
+                p1 = self.tournament_selection(valid_pop,scores)
+                p2 = self.tournament_selection(valid_pop,scores)
                 
                 child = self.crossover(p1, p2)
                 
