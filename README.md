@@ -104,39 +104,7 @@ $$
 $X_i = [0, 1, 0, 0, \ 3, 1, 64]$
 *(Où les types sont : Identity, Conv, Pool, Linear... et les params : Kernel=3, Stride=1, Filters=64).*
 
----
 
-### 3. Pipeline du Projet (Méthodologie)
-
-Le projet se divise en trois phases distinctes :
-
-#### Phase 1 : Collecte de Données (Ground Truth)
-* Génération aléatoire de $K$ architectures (graphes $(A, X)$).
-* Entraînement réel (rapide) de ces architectures sur un dataset (ex: CIFAR-10) pour obtenir leur précision réelle $y$.
-* Constitution du dataset d'entraînement du prédicteur : $\mathcal{D} = \{(G_i, y_i)\}_{i=1}^K$.
-
-#### Phase 2 : Entraînement du Prédicteur GNN
-* Architecture : Utilisation d'un GNN performant (ex: **GIN** - Graph Isomorphism Network) capable de capter les structures graphiques.
-* Objectif : Minimiser l'erreur de prédiction (MSE) :
-    $\mathcal{L} = \frac{1}{K} \sum_{i=1}^K (f_{GNN}(A_i, X_i) - y_i)^2$
-* Le GNN apprend que certaines structures (ex: "Skip Connections") corrèlent avec une haute précision.
-
-#### Phase 3 : Recherche par Métaheuristique (Inférence)
-* Utilisation d'un algorithme évolutionnaire (Algorithme Génétique ou Recuit Simulé).
-* **Fonction de Fitness :** Au lieu d'entraîner le réseau candidat, on passe son graphe $(A, X)$ dans le GNN entraîné.
-    $\text{Score} = f_{GNN}(A_{candidat}, X_{candidat})$
-* **Temps d'évaluation :** Quelques millisecondes vs heures d'entraînement.
-
----
-
-### 4. Stack Technique & Faisabilité
-
-* **Langage :** Python.
-* **Deep Learning :** PyTorch.
-
-??
-* **Graph Library :** **PyTorch Geometric (PyG)** (Standard industriel pour gérer les inputs `Data(x=X, edge_index=A)`).
-* **Avantage Académique :** Cette approche respecte l'invariance par permutation des graphes (si on mélange l'ordre des nœuds sans changer les liens, le GNN donne le même score, contrairement à un MLP sur vecteur plat).
 
 ### Résumé idée
 
@@ -156,6 +124,10 @@ mutation :
 score : 
     -précision
     -temps d'inférence
+
+### idée NN géniteur
+
+actuellement je transforme mes réseaux avec des metaheuristiques, mais est ce qu'il esxiste d'autre maniere de recherche d'optimisation, voir d'utiliser un réseau de neurones capabble d'engendrer des reseaux adapté (soiit un énorme qui est entrainé sur une multitude de reseau soit un petit qui prend en entrée  les datas donne un réseau calcule l'erreur et modifie les poids du réseau géniteur)
 
 ## Ce que j'ai fait
 
@@ -300,6 +272,31 @@ fashion_mnist_resblock    | ABC Algorithm          | 83.88 ± 1.60         | 33.
 
 ```
 
+2eme itération 
+
+```plaintext
+==================================================================================================================================
+TASK                      | ALGORITHM              | TEST SCORE (Avg±Std) | GAIN     | ITER   | Δ DEPTH   
+----------------------------------------------------------------------------------------------------------------------------------
+california_housing        | Simulated Annealing    | -0.41 ± 0.04         | 0.03     | 2.6    | -0.2        
+california_housing        | Genetic Algorithm      | -0.32 ± 0.02         | 0.13     | 8.2    | +4.0       
+california_housing        | ABC Algorithm          | -0.32 ± 0.01         | 0.13     | 9.0    | +2.0  
+
+breast_cancer             | Simulated Annealing    | 97.02 ± 0.89         | 1.58     | 1.4    | -0.2         
+breast_cancer             | Genetic Algorithm      | 98.77 ± 0.43         | 2.63     | 2.2    | +0.4         
+breast_cancer             | ABC Algorithm          | 99.12 ± 0.00         | 4.56     | 9.0    | +0.6 
+
+fashion_mnist_simple      | Simulated Annealing    | 33.04 ± 40.47        | 33.04    | 2.6    | +0.0        
+fashion_mnist_simple      | Genetic Algorithm      | 84.84 ± 1.61         | 84.84    | 7.6    | -1.8       
+fashion_mnist_simple      | ABC Algorithm          | 85.40 ± 0.99         | 85.40    | 9.0    | -1.6  
+
+fashion_mnist_resblock    | Simulated Annealing    | 57.24 ± 7.83         | 11.68    | 4.6    | +0.6       
+fashion_mnist_resblock    | Genetic Algorithm      | 82.76 ± 2.75         | 33.00    | 7.6    | +9.6     
+fashion_mnist_resblock    | ABC Algorithm          | 83.64 ± 0.86         | 34.36    | 9.0    | -0.8      
+
+    
+```
+
 1. California Housing (Score ABC : -0.32)
 
 Le standard : Un modèle classique bien calibré (Random Forest, Gradient Boosting) obtient généralement une MSE autour de 0.25. Un réseau de neurones standard (MLP) construit manuellement tourne généralement entre 0.30 et 0.40.
@@ -322,10 +319,39 @@ Le jeu de données standard compte 60 000 images d'entraînement. Vous avez brid
 
 Le réseau n'a été entrainé que sur 5 époques.
 
-Atteindre 84% en voyant si peu d'images et en si peu de passages prouve que l'algorithme NAS a trouvé des extracteurs de features extrêmement efficaces, capables d'apprendre presque instantanément. Si vous preniez l'architecture finale trouvée par ABC et que vous l'entraîniez sur les 60 000 images pendant 30 époques, elle dépasserait sans aucun doute les 92%.
+Atteindre 84% en voyant si peu d'images et en si peu de passages prouve que l'algorithme NAS a trouvé des   extracteurs de features extrêmement efficaces, capables d'apprendre presque instantanément. Si vous preniez l'architecture finale trouvée par ABC et que vous l'entraîniez sur les 60 000 images pendant 30 époques, elle dépasserait sans aucun doute les 92%.
 
 
-**ANALYSE**
+---
+
+Séparation du dataset de train en deux : un pour l'entrainement des poids, l'autre pour obtenir le score qui détermine l'efficacité de l'architecture.
+
+
+```plaintext
+===========================================
+TASK                      | ALGORITHM              | TEST SCORE (Avg±Std) | GAIN     | ITER   | Δ DEPTH  | TIME(s) 
+----------------------------------------------------------------------------------------------------------------------------------
+california_housing        | Simulated Annealing    | -0.40 ± 0.03         | 0.12     | 3.6    | +0.8     | 22.65   
+california_housing        | Genetic Algorithm      | -0.32 ± 0.01         | 0.14     | 7.8    | +3.6     | 319.17  
+california_housing        | ABC Algorithm          | -0.32 ± 0.01         | 0.15     | 9.0    | +1.4     | 498.10 
+
+breast_cancer             | Simulated Annealing    | 96.48 ± 1.76         | 3.08     | 3.4    | +0.8     | 0.67    
+breast_cancer             | Genetic Algorithm      | 99.34 ± 0.54         | 5.71     | 5.2    | -0.2     | 7.84    
+breast_cancer             | ABC Algorithm          | 99.56 ± 0.54         | 7.91     | 9.0    | +0.2     | 15.39
+
+fashion_mnist_simple      | Simulated Annealing    | 50.60 ± 41.33        | 50.60    | 2.6    | -0.2     | 21.68   
+fashion_mnist_simple      | Genetic Algorithm      | 86.45 ± 1.25         | 86.45    | 6.0    | -1.8     | 455.86  
+fashion_mnist_simple      | ABC Algorithm          | 86.25 ± 1.12         | 86.25    | 9.0    | -0.6     | 380.81
+
+fashion_mnist_resblock    | Simulated Annealing    | 65.10 ± 15.87        | 22.20    | 5.2    | -0.6     | 94.02   
+fashion_mnist_resblock    | Genetic Algorithm      | 81.65 ± 6.38         | 38.20    | 6.2    | +3.8     | 1935.09 
+fashion_mnist_resblock    | ABC Algorithm          | 86.30 ± 0.93         | 43.55    | 9.0    | -0.8     | 2195.27 
+
+```
+
+Résultats assez similaires
+
+
 
 
 

@@ -16,24 +16,39 @@ class Optimizer(ABC):
         self.dataset = dataset
         self.best_score = -float('inf')
         self.best_arch = None
-
+    
     def evaluate(self, genome, train_epochs=10):
         try:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            input_shape = (3, 32, 32)
+            
+            base_dataset = self.dataset.dataset if hasattr(self.dataset, 'dataset') else self.dataset
+            batch_size = self.dataset.batch_size if hasattr(self.dataset, 'batch_size') else 32
+            
+            sample_input, sample_target = base_dataset[0]
+            input_shape = sample_input.shape
+
+            if isinstance(sample_target, torch.Tensor):
+                if sample_target.dtype in [torch.float16, torch.float32, torch.float64] and sample_target.numel() == 1:
+                    criterion = nn.BCEWithLogitsLoss()
+                    task = "binary"
+                else:
+                    criterion = nn.CrossEntropyLoss()
+                    task = "multiclass"
+            else:
+                criterion = nn.CrossEntropyLoss()
+                task = "multiclass"
+
             model = DynamicNet(genome, input_shape=input_shape)
             model.to(device)
-            
-            if self.dataset is None:
-                inputs = torch.randn(64, 3, 32, 32)
-                targets = torch.randint(0, 2, (64,))
-                train_loader = DataLoader(TensorDataset(inputs, targets), batch_size=16)
-            else:
-                train_loader = self.dataset
-                
+
+            train_size = int(0.7 * len(base_dataset))
+            val_size = len(base_dataset) - train_size
+            train_dataset, val_dataset = torch.utils.data.random_split(base_dataset, [train_size, val_size])
+
+            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
             optimizer = optim.Adam(model.parameters(), lr=0.001)
-            criterion = nn.CrossEntropyLoss()
             
             model.train()
             for epoch in range(train_epochs):
@@ -41,17 +56,35 @@ class Optimizer(ABC):
                     inputs, targets = inputs.to(device), targets.to(device)
                     optimizer.zero_grad()
                     outputs = model(inputs)
+                    
+                    if task == "binary":
+                        targets = targets.view(-1, 1).float()
+                    else:
+                        targets = targets.long()
+                        if targets.dim() > 1 and targets.shape[1] == 1:
+                            targets = targets.squeeze(1)
+
                     loss = criterion(outputs, targets)
                     loss.backward()
                     optimizer.step()
 
+            model.eval()
             correct = 0
             total = 0
             with torch.no_grad():
-                for inputs, targets in train_loader:
+                for inputs, targets in val_loader:
                     inputs, targets = inputs.to(device), targets.to(device)
                     outputs = model(inputs)
-                    _, predicted = outputs.max(1)
+                    
+                    if task == "binary":
+                        targets = targets.view(-1, 1).float()
+                        predicted = (outputs > 0).float()
+                    else:
+                        targets = targets.long()
+                        if targets.dim() > 1 and targets.shape[1] == 1:
+                            targets = targets.squeeze(1)
+                        _, predicted = outputs.max(1)
+                        
                     total += targets.size(0)
                     correct += predicted.eq(targets).sum().item()
 

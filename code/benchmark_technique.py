@@ -141,6 +141,15 @@ class BenchmarkWrapper:
                 model = DynamicNet(genome, input_shape=self.in_shape)
                 model.to(DEVICE)
                 
+                base_dataset = self.train_loader.dataset
+                batch_size = self.train_loader.batch_size
+                train_size = int(0.8 * len(base_dataset))
+                val_size = len(base_dataset) - train_size
+                
+                train_subset, val_subset = torch.utils.data.random_split(base_dataset, [train_size, val_size])
+                inner_train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
+                inner_val_loader = DataLoader(val_subset, batch_size=batch_size)
+                
                 if 'regression' in self.task_type or 'california' in self.task_type:
                     criterion = nn.MSELoss()
                 else:
@@ -150,7 +159,7 @@ class BenchmarkWrapper:
                 
                 model.train()
                 for epoch in range(train_epochs):
-                    for X_batch, y_batch in self.train_loader:
+                    for X_batch, y_batch in inner_train_loader:
                         if len(self.in_shape) == 2 and X_batch.dim() > 2:
                             X_batch = X_batch.view(X_batch.size(0), -1)
                         X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
@@ -165,7 +174,7 @@ class BenchmarkWrapper:
                     total_loss = 0
                     total_samples = 0
                     with torch.no_grad():
-                        for X_b, y_b in self.test_loader:
+                        for X_b, y_b in inner_val_loader:
                             if len(self.in_shape) == 2 and X_b.dim() > 2: 
                                 X_b = X_b.view(X_b.size(0), -1)
                             X_b, y_b = X_b.to(DEVICE), y_b.to(DEVICE)
@@ -177,7 +186,7 @@ class BenchmarkWrapper:
                     correct = 0
                     total = 0
                     with torch.no_grad():
-                        for X_b, y_b in self.test_loader:
+                        for X_b, y_b in inner_val_loader:
                             if len(self.in_shape) == 2 and X_b.dim() > 2: 
                                 X_b = X_b.view(X_b.size(0), -1)
                             X_b, y_b = X_b.to(DEVICE), y_b.to(DEVICE)
