@@ -434,5 +434,156 @@ class ABCOptimizer(Optimizer):
             "gain": self.best_score - initial_score
         }
         return self.best_arch, stats
- 
+
+import torch.nn.functional as F
+from torch.distributions import Categorical #choisit aléatoirement selon les probs
+
+class ControllerRNN(nn.Module):
+    def __init__(self, num_tokens, hidden_size=64):
+        super().__init__()
+        self.num_tokens = num_tokens
+        self.hidden_size = hidden_size
+        self.embedding = nn.Embedding(num_tokens, hidden_size)
+        self.lstm = nn.LSTMCell(hidden_size, hidden_size)
+        self.decoder = nn.Linear(hidden_size, num_tokens)
+
+    def forward(self, x, h, c):
+        embed = self.embedding(x)
+        h, c = self.lstm(embed, (h, c))
+        logits = self.decoder(h)
+        return logits, h, c
+
+class RLOptimizer(Optimizer):
+    def __init__(self, layers=None, search_space=None, dataset=None, max_layers=5, hidden_size=64, lr=0.01, **kwargs):
+        super().__init__(layers, search_space, dataset)
+        self.max_layers = max_layers
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        self.vocab = [
+            "conv_3_16", "conv_3_32", "conv_5_16", 
+            "pool_2", 
+            "linear_32", "linear_64", 
+            "dropout_0.2", "dropout_0.5",
+            "bn2d", "bn1d", "flatten", "avgpool"
+        ]
+        self.num_tokens = len(self.vocab)
+        
+        self.controller = ControllerRNN(self.num_tokens, hidden_size).to(self.device)
+        self.ctrl_optimizer = optim.Adam(self.controller.parameters(), lr=lr)
+        self.baseline = 0.0
+
+    def _token_to_cfg(self, token, is_linear_context):
+        if token == "conv_3_16" and not is_linear_context:
+            return Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU)
+        elif token == "conv_3_32" and not is_linear_context:
+            return Conv2dCfg(in_channels=0, out_channels=32, kernel_size=3, padding=1, activation=nn.ReLU)
+        elif token == "conv_5_16" and not is_linear_context:
+            return Conv2dCfg(in_channels=0, out_channels=16, kernel_size=5, padding=2, activation=nn.ReLU)
+        elif token == "pool_2" and not is_linear_context:
+            return MaxPool2dCfg(kernel_size=2, stride=2, padding=0)
+        elif token == "bn2d" and not is_linear_context:
+            return BatchNorm2dCfg(num_features=0)
+        elif token == "avgpool" and not is_linear_context:
+            return GlobalAvgPoolCfg()
+        elif token == "flatten":
+            return FlattenCfg()
+        elif token == "linear_32":
+            return LinearCfg(in_features=0, out_features=32, activation=nn.ReLU)
+        elif token == "linear_64":
+            return LinearCfg(in_features=0, out_features=64, activation=nn.ReLU)
+        elif token == "dropout_0.2":
+            return DropoutCfg(p=0.2)
+        elif token == "dropout_0.5":
+            return DropoutCfg(p=0.5)
+        elif token == "bn1d" and is_linear_context:
+            return BatchNorm1dCfg(num_features=0)
+        return None
+
+    def generate_architecture(self):
+        h = torch.zeros(1, self.controller.hidden_size).to(self.device)
+        c = torch.zeros(1, self.controller.hidden_size).to(self.device)
+        
+        inp = torch.tensor([0]).to(self.device) 
+        
+        log_probs = []
+        entropy = 0
+        generated_cfg = []
+        is_linear_context = False
+        
+        for i in range(self.max_layers):
+            logits, h, c = self.controller(inp, h, c)
+            probs = F.softmax(logits, dim=-1)
+            m = Categorical(probs)
+            
+            action = m.sample()
+            log_prob = m.log_prob(action)
+            
+            log_probs.append(log_prob)
+            entropy += m.entropy().mean()
+            
+            token_str = self.vocab[action.item()]
+            
+            if token_str == "flatten" or token_str == "avgpool" or token_str.startswith("linear"):
+                is_linear_context = True
+                
+            cfg = self._token_to_cfg(token_str, is_linear_context)
+            if cfg is not None:
+                generated_cfg.append(cfg)
+                
+            inp = action
+
+        if not any(isinstance(layer, LinearCfg) for layer in generated_cfg):
+            generated_cfg.append(FlattenCfg())
+            generated_cfg.append(LinearCfg(in_features=0, out_features=2, activation=None))
+
+        return generated_cfg, torch.cat(log_probs).sum()
+
+    def run(self, n_iterations):
+        best_gen = -1
+        
+        initial_score = self.evaluate(self.layers)
+        if initial_score == -float('inf'):
+            initial_score = 0.0 
+        self.baseline = initial_score
+        
+        regression = (initial_score <= 0.0)
+        crash_score = -1000.0 if regression else 0.0
+
+        batch_size = 32
+
+        for i in range(n_iterations):
+            self.controller.train()
+            self.ctrl_optimizer.zero_grad()
+            
+            batch_loss = 0
+            
+            for _ in range(batch_size):
+                arch_cfg, log_prob = self.generate_architecture()
+                
+                reward = self.evaluate(arch_cfg)
+                if reward == -float('inf'):
+                    reward = crash_score
+                
+                advantage = reward - self.baseline
+                batch_loss += -log_prob * advantage
+                
+                self.baseline = 0.95 * self.baseline + 0.05 * reward
+
+                if reward > self.best_score:
+                    self.best_score = reward
+                    self.best_arch = copy.deepcopy(arch_cfg)
+                    best_gen = i
+                    print(f"RL Iter {i}: New Best Score {self.best_score:.2f}")
+            
+            batch_loss = batch_loss / batch_size
+            batch_loss.backward()
+            self.ctrl_optimizer.step()
+
+        stats = {
+            "initial_score": initial_score,
+            "best_score": self.best_score if self.best_score != crash_score else initial_score,
+            "best_iter": best_gen,
+            "gain": (self.best_score - initial_score) if self.best_score != crash_score else 0.0
+        }
+        return self.best_arch, stats
 

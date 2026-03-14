@@ -12,14 +12,14 @@ from sklearn.preprocessing import StandardScaler
 from torchvision import datasets, transforms
 from layer_classes import Conv2dCfg, DropoutCfg, FlattenCfg, LinearCfg, MaxPool2dCfg, GlobalAvgPoolCfg, BatchNorm1dCfg, BatchNorm2dCfg, ResBlockCfg
 from model import DynamicNet
-from optimizer import SAOptimizer, GeneticOptimizer, ABCOptimizer
+from optimizer import SAOptimizer, GeneticOptimizer, ABCOptimizer, RLOptimizer
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 64
 N_SAMPLES_TRAIN_IMG = 2000
 N_SAMPLES_TEST_IMG = 500
 N_STATS_RUNS = 5
-ITERATIONS_OPTIM = 10
+ITERATIONS_OPTIM = 100
 
 def get_dataset(task_type):
     if task_type == 'california_housing':
@@ -231,9 +231,10 @@ if __name__ == "__main__":
     tasks = ["california_housing", "breast_cancer", "fashion_mnist_simple", "fashion_mnist_resblock"]
     
     optimizers = [
-        ("Simulated Annealing", SAOptimizer, {"temp_init": 100, "cooling_rate": 0.8}),
-        ("Genetic Algorithm", GeneticOptimizer, {"pop_size": 10, "mutation_rate": 0.3}),
-        ("ABC Algorithm", ABCOptimizer, {"pop_size": 10, "limit": 4})
+        #("Simulated Annealing", SAOptimizer, {"temp_init": 100, "cooling_rate": 0.8}),
+        #("Genetic Algorithm", GeneticOptimizer, {"pop_size": 10, "mutation_rate": 0.3}),
+        #("ABC Algorithm", ABCOptimizer, {"pop_size": 10, "limit": 4}),
+        ("RL Controller", RLOptimizer, {"max_layers": 8})
     ]
 
     print("\n" + "="*130)

@@ -141,9 +141,43 @@ Etant donné qu'un NN =(A,X,W) avec A le graphe d'adjacence, X l'encodage de cha
 J'ai condensé la matrice A dans la matrice X. l'intérêt de A était de connaitre la connexion entre les layers, généralement n -> n+1, SAUF si il y a un ResBlock, si dans la matrice X nous indiquons qu'il y a un Res block pour les h prochaines lignes alors le graphe d'adjence devient inutile et X contient toutes les informations nécessaires.
 
 
+
+## Réseau Géniteur
+
+Pour l'instant, je fais un réseau géniteur entrainé sur chaque problème: 
+
+- Un NN à accès à une liste de mots vocab = ["conv_3_16", "pool_2", "linear_32", "dropout_0.2", ...]
+- A chaque étape un RNN (ControllerRNN) lit leS mots précédents (ou un signal de départ), génère les scores pour les prochains mots         possibles, puis fait son tirage au sort
+- puis il choisit aléatoirment en fonction des scores, et on garde en mémoire les scores choisis (log_prob). 
+- Ensuite on créé le réseau à partir de la liste généré par le RNN
+- On l'entraine un peu par batch.
+- On calcule l'erreur
+
+Pour l'apprentissage c'est du reinforcement learning
+
+- On garde en mémoire la moyenne des scores obtenus baseline, pour ensuite obtenir "l'avantage"= reward-baseline.
+- On modifie les poids du RNN selon "batch_loss += -log_prob * advantage"
+
+
+En pratique, pour un nombre faible d'itération pour la recherche d'architecture, 10-30, le modèle a des résultats mauvais; pour un plus grand nombre il est très long (PS : j'ai pas de  GPU ça aide pas ...).
+
+
+```plaintext
+
+Variable
+
+vocab (list) : L'espace de recherche discret. Il définit l'ensemble des "tokens" ou blocs de construction disponibles (ex. convolutions, pooling, couches denses) que le Contrôleur est autorisé à sélectionner.
+
+max_layers (int) : La profondeur maximale (ou longueur de séquence) du réseau à générer. Cette limite contraint la boucle de génération autorégressive du Contrôleur.
+
+hidden_size (int) : La dimension de l'état caché (mémoire) des cellules LSTM du Contrôleur. Elle détermine la capacité du modèle à retenir les dépendances contextuelles entre les couches générées (ex. se souvenir qu'une convolution vient d'être placée).
+
+baseline (float) : La moyenne mobile exponentielle des récompenses (scores de validation) obtenues lors des itérations précédentes. Elle agit comme une ligne de base mathématique pour évaluer la qualité relative d'une nouvelle architecture.
+```
+
 ### Benchmark
 
-Un dichier py qui fonctionne pour tous les optimisateurs et teste :
+Un fichier py qui fonctionne pour tous les optimisateurs et teste :
 classification par modèle linéaire sur make_moons
 régression par modèle linéaire sur make_regression
 CNN simple et CNN avec res block sur mnist
@@ -160,6 +194,9 @@ il n'est pas rapide d'obtenir le nombre de paramètres des modèles, on compare 
  sont les moyennes des N_STATS_RUNS itérations
 
 Best_score est le meilleur score obtenu sur les runs
+
+
+
 
 
 ## Résultats
@@ -181,7 +218,7 @@ make_moons(n_samples=N_SAMPLES, noise=0.1, random_state=42) pour la classificati
 
 MNIST pour les CNN
 
-### Recuit Simulé
+### Benchmark 1
 
 ```plaintext
 BATCH_SIZE        = 32
