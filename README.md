@@ -405,6 +405,10 @@ fashion_mnist_resblock | RL Controller | 85.85 ± 0.96 | 39.75 | 48.6 | -3.4  | 
 
 ```
 
+![alt text](image.png)
+
+![alt text](image-1.png)
+
 ## RDV
 
 #### RDV 26/01
@@ -417,3 +421,6 @@ RS et AG
 Mettre en place un systeme de recherche de contrainte temporelle (mais pas trop lourd) ?
 
 
+### RDV 10/03
+
+mettre en place la génération par reinforcement learning
