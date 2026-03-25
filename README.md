@@ -388,9 +388,22 @@ fashion_mnist_resblock    | ABC Algorithm          | 86.30 ± 0.93         | 43.
 
 Résultats assez similaires
 
+---
+Réseau générateur
 
+```plaintext
+task                   | algo          | score_str    | gain  | iter | depth | time
+california_housing     | RL Controller | -0.39 ± 0.01 | 0.058 | 3.4  | 2.4   | 7996.40
+breast_cancer          | RL Controller | 99.56 ± 0.54 | 9.890 | 46.2 | -1.0  | 266.54
+```
 
+Pour les images il y a un bug qui doit être résolu en utilisant uniquement le cpu
+```plaintext
+task                   | algo          | score_str    | gain  | iter | depth | time
+fashion_mnist_simple   | RL Controller | 85.20 ± 0.68 | 85.2  | 47.6 | -2.2  | 18371.14
+fashion_mnist_resblock | RL Controller | 85.85 ± 0.96 | 39.75 | 48.6 | -3.4  | 16620.68
 
+```
 
 ## RDV
 
