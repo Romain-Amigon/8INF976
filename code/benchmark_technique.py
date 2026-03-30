@@ -19,7 +19,7 @@ BATCH_SIZE = 64
 N_SAMPLES_TRAIN_IMG = 2000
 N_SAMPLES_TEST_IMG = 500
 N_STATS_RUNS = 5
-ITERATIONS_OPTIM = 100
+ITERATIONS_OPTIM = 50
 
 def get_dataset(task_type):
     if task_type == 'california_housing':
@@ -234,7 +234,7 @@ if __name__ == "__main__":
         #("Simulated Annealing", SAOptimizer, {"temp_init": 100, "cooling_rate": 0.8}),
         #("Genetic Algorithm", GeneticOptimizer, {"pop_size": 10, "mutation_rate": 0.3}),
         #("ABC Algorithm", ABCOptimizer, {"pop_size": 10, "limit": 4}),
-        ("RL Controller", RLOptimizer, {"max_layers": 8})
+        ("RL Controller", RLOptimizer, {"max_layers": 50})
     ]
 
     print("\n" + "="*130)

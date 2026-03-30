@@ -160,11 +160,18 @@ Pour l'apprentissage c'est du reinforcement learning
 
 
 En pratique, pour un nombre faible d'itération pour la recherche d'architecture, 10-30, le modèle a des résultats mauvais; pour un plus grand nombre il est très long (PS : j'ai pas de  GPU ça aide pas ...).
+`
+```markdown
+Neural Architecture Search with Reinforcement Learning
+Auteurs : Barret Zoph, Quoc V. Le (Google Brain)
+Conférence : ICLR 2017
+Lien / ArXiv : arXiv:1611.01578
 
+ un RNN (le Contrôleur) génère une chaîne de paramètres (filtres, strides, etc.) pour définir un réseau convolutif. Le réseau enfant est entraîné, sa précision sur l'ensemble de validation sert de récompense, et le Contrôleur est mis à jour avec l'algorithme Policy Gradient (REINFORCE).
 
-```plaintext
+Pour trouver une bonne architecture sur le dataset CIFAR-10, Zoph et Le ont dû utiliser 800 GPUs en parallèle pendant 28 jours. Citer ce chiffre dans ton rapport prouve que la lenteur que tu as observée sur ton processeur i5 est un fait scientifique avéré de cette méthode, et non un défaut de ton code.
 
-Variable
+```
 
 vocab (list) : L'espace de recherche discret. Il définit l'ensemble des "tokens" ou blocs de construction disponibles (ex. convolutions, pooling, couches denses) que le Contrôleur est autorisé à sélectionner.
 
@@ -173,8 +180,60 @@ max_layers (int) : La profondeur maximale (ou longueur de séquence) du réseau 
 hidden_size (int) : La dimension de l'état caché (mémoire) des cellules LSTM du Contrôleur. Elle détermine la capacité du modèle à retenir les dépendances contextuelles entre les couches générées (ex. se souvenir qu'une convolution vient d'être placée).
 
 baseline (float) : La moyenne mobile exponentielle des récompenses (scores de validation) obtenues lors des itérations précédentes. Elle agit comme une ligne de base mathématique pour évaluer la qualité relative d'une nouvelle architecture.
-```
 
+
+--- 
+
+#### Modifications
+
+La première version été assez mauvais pour la régression et non révolutionnaire pour la classification, je tente des changements
+
+1. La récompense Multi-Objectif (Pénalité de taille)
+
+le calcul de la récompense a été changé : reward = raw_score - (0.5 * len(arch_cfg)) (appliqué uniquement aux tâches de classification).
+
+L'impact : L'Agent RL est désormais activement "puni" s'il crée des réseaux trop longs. Pour une précision égale, l'algorithme REINFORCE va naturellement ajuster ses probabilités pour privilégier l'architecture la plus courte, ce qui combat l'obésité du réseau (le bloat) et accélère les itérations futures.
+
+2. L'intégration de l'Entropie (Bonus d'exploration)
+
+La variable self.entropy_weight = 0.05 a été créée. La fonction de perte (la Loss) a été modifiée pour l'inclure : batch_loss += (-log_prob * advantage) - (self.entropy_weight * entropy).
+
+L'impact : L'entropie mesure à quel point les choix du RNN sont "incertains" ou répartis. Soustraire l'entropie à la perte force mathématiquement le réseau à maintenir un certain niveau de hasard dans ses choix initiaux. Cela l'empêche de faire une "convergence prématurée" (c'est-à-dire trouver une architecture très moyenne au premier essai et ne générer plus que celle-là en boucle par peur d'essayer autre chose).
+
+
+Les résultats ne sont pas mieux masi le temps d'entrainement a été réduit .
+
+
+---
+
+
+
+---
+### A etudier + idée
+```plaintext
+Efficient Neural Architecture Search via Parameter Sharing
+Auteurs : Hieu Pham, Melody Y. Guan, Barret Zoph, Quoc V. Le, Jeff Dean
+Conférence : ICML 2018
+Lien / ArXiv : arXiv:1802.03268
+
+Au lieu d'initialiser les poids de chaque nouveau réseau généré à zéro et de l'entraîner (ce que fait ta boucle evaluate), tous les réseaux générés partagent leurs poids (Weight Sharing) au sein d'un grand super-graphe.
+
+Ce papier montre qu'en gardant le même algorithme RL mais en ajoutant le partage de poids, le temps de recherche est passé de milliers d'heures GPU à moins de 16 heures sur 1 seul GPU (une accélération d'un facteur 1000).
+```
+entrainer un VAE globale qui a pour but d'encoder dans un espace latent acceptable les réseau de neurones puis ensuite le réseau géniteur peut donner un espace latent correspondant a un réseau qui evoluera en fonction de l'entrainement, c'est peut etre plsu efficace car ce n'est plus une couche qui dépend des précédentes mais une vue d'ensemble donnée.
+
+> **L'Encoder** : Il prend un graphe discret (votre matrice d'adjacence $A$ et vos caractéristiques $X$) et le compresse en un vecteur continu dans l'espace latent $z \in \mathbb{R}^d$.
+>
+> **La Vue Globale** :  $z$ ne représente plus une suite de couches, mais l'essence globale du réseau (sa "profondeur", sa "largeur", sa "densité de connexion").
+>
+> **Le Prédicteur** : On ajoute un petit réseau (MLP) branché sur l'espace latent qui apprend à prédire le score : $f(z) = \text{Accuracy}$.
+>
+> **Montée de Gradient** : Puisque l'espace $z$ est continu, on peut utiliser la descente de gradient classique. On prend une architecture moyenne $z$ et on calcule :
+> $$z_{opt} = z + \eta \nabla_z f(z)$$
+>
+> **Le Decoder** : On repasse $z_{opt}$ dans le décodeur pour obtenir la nouvelle topologie discrète optimisée.
+
+---
 ### Benchmark
 
 Un fichier py qui fonctionne pour tous les optimisateurs et teste :
@@ -391,6 +450,11 @@ Résultats assez similaires
 ---
 Réseau générateur
 
+TODO : noter les caractéristiques des ordis en 6600
+
+max_layers= 50
+ITERATIONS_OPTIM = 100
+
 ```plaintext
 task                   | algo          | score_str    | gain  | iter | depth | time
 california_housing     | RL Controller | -0.39 ± 0.01 | 0.058 | 3.4  | 2.4   | 7996.40
@@ -408,6 +472,26 @@ fashion_mnist_resblock | RL Controller | 85.85 ± 0.96 | 39.75 | 48.6 | -3.4  | 
 ![alt text](image.png)
 
 ![alt text](image-1.png)
+---
+max_layers= 50
+ITERATIONS_OPTIM = 50
+
+ajout de l'entropie
+
+SUr Processeur :	Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz
+
+
+
+
+```plaintext
+==================================================================================================================================
+TASK                      | ALGORITHM              | TEST SCORE (Avg±Std) | GAIN     | ITER   | Δ DEPTH  | TIME(s) 
+----------------------------------------------------------------------------------------------------------------------------------
+california_housing        | RL Controller          | -0.39 ± 0.02         | 0.07     | 8.0    | +1.8     | 1656.60 
+breast_cancer             | RL Controller          | 99.34 ± 0.88         | 5.27     | 25.4   | -1.0     | 55.18   
+fashion_mnist_simple      | RL Controller          | 84.25 ± 1.08         | 84.25    | 24.0   | -1.2     | 2634.16 
+fashion_mnist_resblock    | RL Controller          | 85.55 ± 1.35         | 43.35    | 16.4   | -3.4     | 2443.94 
+```
 
 ## RDV
 

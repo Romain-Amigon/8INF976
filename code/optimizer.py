@@ -454,25 +454,29 @@ class ControllerRNN(nn.Module):
         return logits, h, c
 
 class RLOptimizer(Optimizer):
-    def __init__(self, layers=None, search_space=None, dataset=None, max_layers=5, hidden_size=64, lr=0.01, **kwargs):
+    def __init__(self, layers=None, search_space=None, dataset=None, max_layers=8, hidden_size=64, lr=0.01, **kwargs):
         super().__init__(layers, search_space, dataset)
         self.max_layers = max_layers
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
+        # 1. Ajout du jeton "stop"
         self.vocab = [
             "conv_3_16", "conv_3_32", "conv_5_16", 
             "pool_2", 
             "linear_32", "linear_64", 
             "dropout_0.2", "dropout_0.5",
-            "bn2d", "bn1d", "flatten", "avgpool"
+            "bn2d", "bn1d", "flatten", "avgpool",
+            "stop"
         ]
         self.num_tokens = len(self.vocab)
         
         self.controller = ControllerRNN(self.num_tokens, hidden_size).to(self.device)
         self.ctrl_optimizer = optim.Adam(self.controller.parameters(), lr=lr)
         self.baseline = 0.0
+        self.entropy_weight = 0.05 # Poids de l'exploration
 
     def _token_to_cfg(self, token, is_linear_context):
+        # (Gardez exactement le même code que votre version précédente ici)
         if token == "conv_3_16" and not is_linear_context:
             return Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU)
         elif token == "conv_3_32" and not is_linear_context:
@@ -523,6 +527,10 @@ class RLOptimizer(Optimizer):
             
             token_str = self.vocab[action.item()]
             
+            # 2. Interruption anticipée si "stop" est choisi
+            if token_str == "stop":
+                break
+                
             if token_str == "flatten" or token_str == "avgpool" or token_str.startswith("linear"):
                 is_linear_context = True
                 
@@ -536,7 +544,7 @@ class RLOptimizer(Optimizer):
             generated_cfg.append(FlattenCfg())
             generated_cfg.append(LinearCfg(in_features=0, out_features=2, activation=None))
 
-        return generated_cfg, torch.cat(log_probs).sum()
+        return generated_cfg, torch.cat(log_probs).sum(), entropy
 
     def run(self, n_iterations):
         best_gen = -1
@@ -549,7 +557,7 @@ class RLOptimizer(Optimizer):
         regression = (initial_score <= 0.0)
         crash_score = -1000.0 if regression else 0.0
 
-        batch_size = 32
+        batch_size = 16 # Légèrement réduit pour gagner du temps
 
         for i in range(n_iterations):
             self.controller.train()
@@ -558,22 +566,31 @@ class RLOptimizer(Optimizer):
             batch_loss = 0
             
             for _ in range(batch_size):
-                arch_cfg, log_prob = self.generate_architecture()
+                arch_cfg, log_prob, entropy = self.generate_architecture()
                 
-                reward = self.evaluate(arch_cfg)
-                if reward == -float('inf'):
+                raw_score = self.evaluate(arch_cfg)
+                
+                if raw_score == -float('inf'):
                     reward = crash_score
+                else:
+                    # 3. Pénalité Multi-objectif : On soustrait un malus lié au nombre de couches
+                    # Ajustez le 0.5 selon l'importance que vous donnez à la taille du réseau
+                    length_penalty = 0.5 * len(arch_cfg) if not regression else 0.0
+                    reward = raw_score - length_penalty
                 
                 advantage = reward - self.baseline
-                batch_loss += -log_prob * advantage
+                
+                # 4. Ajout de l'entropie à la fonction de perte
+                batch_loss += (-log_prob * advantage) - (self.entropy_weight * entropy)
                 
                 self.baseline = 0.95 * self.baseline + 0.05 * reward
 
-                if reward > self.best_score:
-                    self.best_score = reward
+                # On sauvegarde sur le vrai score (sans la pénalité)
+                if raw_score > self.best_score and raw_score != crash_score:
+                    self.best_score = raw_score
                     self.best_arch = copy.deepcopy(arch_cfg)
                     best_gen = i
-                    print(f"RL Iter {i}: New Best Score {self.best_score:.2f}")
+                    print(f"RL Iter {i}: New Best Score {self.best_score:.2f} (Depth: {len(arch_cfg)})")
             
             batch_loss = batch_loss / batch_size
             batch_loss.backward()
@@ -586,4 +603,3 @@ class RLOptimizer(Optimizer):
             "gain": (self.best_score - initial_score) if self.best_score != crash_score else 0.0
         }
         return self.best_arch, stats
-
