@@ -7,8 +7,8 @@ from torch.utils.data import DataLoader, TensorDataset
 from layer_classes import FlattenCfg, LinearCfg
 from optimizer import ABCOptimizer
 
-test = pd.read_csv("C:/Users/amigo/Downloads/test.csv")
-train = pd.read_csv("C:/Users/amigo/Downloads/train.csv")
+test = pd.read_csv("data/churn/test.csv")
+train = pd.read_csv("data/churn/train.csv")
 
 train['TotalCharges'] = pd.to_numeric(train['TotalCharges'], errors='coerce').fillna(0)
 
