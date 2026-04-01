@@ -16,6 +16,23 @@ class Optimizer(ABC):
         self.dataset = dataset
         self.best_score = -float('inf')
         self.best_arch = None
+        
+        base_dataset = self.dataset.dataset if hasattr(self.dataset, 'dataset') else self.dataset
+        _, sample_target = base_dataset[0]
+        
+        if hasattr(base_dataset, 'classes'):
+            self.out_features = len(base_dataset.classes)
+        elif isinstance(sample_target, torch.Tensor):
+            if sample_target.dtype in [torch.float16, torch.float32, torch.float64]:
+                self.out_features = sample_target.numel()
+            else:
+                all_targets = [y for _, y in base_dataset]
+                self.out_features = int(torch.tensor(all_targets).max().item()) + 1
+        elif isinstance(sample_target, int):
+            all_targets = [y for _, y in base_dataset]
+            self.out_features = max(all_targets) + 1
+        else:
+            self.out_features = 1
     
     def evaluate(self, genome, train_epochs=10):
         try:
@@ -591,6 +608,236 @@ class RLOptimizer(Optimizer):
                     self.best_arch = copy.deepcopy(arch_cfg)
                     best_gen = i
                     print(f"RL Iter {i}: New Best Score {self.best_score:.2f} (Depth: {len(arch_cfg)})")
+            
+            batch_loss = batch_loss / batch_size
+            batch_loss.backward()
+            self.ctrl_optimizer.step()
+
+        stats = {
+            "initial_score": initial_score,
+            "best_score": self.best_score if self.best_score != crash_score else initial_score,
+            "best_iter": best_gen,
+            "gain": (self.best_score - initial_score) if self.best_score != crash_score else 0.0
+        }
+        return self.best_arch, stats
+
+
+import math
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=50):
+        super().__init__()
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(max_len, 1, d_model)
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        x = x + self.pe[:x.size(0)]
+        return x
+
+class ControllerTransformer(nn.Module):
+    def __init__(self, num_tokens, d_model=64, nhead=4, num_layers=2, max_len=20):
+        super().__init__()
+        self.num_tokens = num_tokens
+        self.d_model = d_model
+        
+        self.embedding = nn.Embedding(num_tokens, d_model)
+        self.pos_encoder = PositionalEncoding(d_model, max_len=max_len)
+        
+        encoder_layers = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=d_model*2, dropout=0.1)
+        self.transformer = nn.TransformerEncoder(encoder_layers, num_layers=num_layers)
+        
+        self.decoder = nn.Linear(d_model, num_tokens)
+
+    def generate_square_subsequent_mask(self, sz):
+        mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        return mask
+
+    def forward(self, src):
+        seq_len = src.size(0)
+        mask = self.generate_square_subsequent_mask(seq_len).to(src.device)
+        
+        src = self.embedding(src) * math.sqrt(self.d_model)
+        src = self.pos_encoder(src)
+        
+        output = self.transformer(src, mask=mask)
+        logits = self.decoder(output)
+        return logits
+
+class TransformerOptimizer(Optimizer):
+    def __init__(self, layers=None, search_space=None, dataset=None, max_layers=8, entropy_weight=0.05, entropy_fct=None, d_model=64, nhead=4, num_layers=2, lr=0.01, **kwargs):
+        super().__init__(layers, search_space, dataset)
+        self.max_layers = max_layers
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        self.vocab = [
+            "conv_3_16", "conv_3_32", "conv_5_16", 
+            "resblock_16", "resblock_32",
+            "pool_2", 
+            "linear_32", "linear_64", 
+            "dropout_0.2", "dropout_0.5",
+            "bn2d", "bn1d", "flatten", "avgpool",
+            "stop"
+        ]
+        self.num_tokens = len(self.vocab)
+        
+        self.controller = ControllerTransformer(self.num_tokens, d_model=d_model, nhead=nhead, num_layers=num_layers, max_len=max_layers+5).to(self.device)
+        self.ctrl_optimizer = optim.Adam(self.controller.parameters(), lr=lr)
+        self.baseline = 0.0
+        self.entropy_weight = entropy_weight 
+        
+        if entropy_fct is True or entropy_fct == "default":
+            self.entropy_fct = self.variable_entropy
+        else:
+            self.entropy_fct = entropy_fct
+
+    def variable_entropy(self, current_weight, iters_without_improvement, patience=5, base=0.05, max_w=0.5):
+        if iters_without_improvement == 0:
+            return base
+        if iters_without_improvement >= patience:
+            return min(max_w, current_weight * 1.5)
+        return current_weight
+
+    def _token_to_cfg(self, token, is_linear_context):
+        if token == "conv_3_16" and not is_linear_context:
+            return Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU)
+        elif token == "conv_3_32" and not is_linear_context:
+            return Conv2dCfg(in_channels=0, out_channels=32, kernel_size=3, padding=1, activation=nn.ReLU)
+        elif token == "conv_5_16" and not is_linear_context:
+            return Conv2dCfg(in_channels=0, out_channels=16, kernel_size=5, padding=2, activation=nn.ReLU)
+        elif token == "resblock_16" and not is_linear_context:
+            sub_layers = [
+                Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU),
+                BatchNorm2dCfg(num_features=16),
+                Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=None)
+            ]
+            return ResBlockCfg(sub_layers=sub_layers, use_projection=True)
+        elif token == "resblock_32" and not is_linear_context:
+            sub_layers = [
+                Conv2dCfg(in_channels=0, out_channels=32, kernel_size=3, padding=1, activation=nn.ReLU),
+                BatchNorm2dCfg(num_features=32),
+                Conv2dCfg(in_channels=0, out_channels=32, kernel_size=3, padding=1, activation=None)
+            ]
+            return ResBlockCfg(sub_layers=sub_layers, use_projection=True)
+        elif token == "pool_2" and not is_linear_context:
+            return MaxPool2dCfg(kernel_size=2, stride=2, padding=0)
+        elif token == "bn2d" and not is_linear_context:
+            return BatchNorm2dCfg(num_features=0)
+        elif token == "avgpool" and not is_linear_context:
+            return GlobalAvgPoolCfg()
+        elif token == "flatten":
+            return FlattenCfg()
+        elif token == "linear_32":
+            return LinearCfg(in_features=0, out_features=32, activation=nn.ReLU)
+        elif token == "linear_64":
+            return LinearCfg(in_features=0, out_features=64, activation=nn.ReLU)
+        elif token == "dropout_0.2":
+            return DropoutCfg(p=0.2)
+        elif token == "dropout_0.5":
+            return DropoutCfg(p=0.5)
+        elif token == "bn1d" and is_linear_context:
+            return BatchNorm1dCfg(num_features=0)
+        return None
+
+    def generate_architecture(self):
+        sequence = torch.tensor([[0]], dtype=torch.long).to(self.device)
+        
+        log_probs = []
+        entropy_total = 0
+        generated_cfg = []
+        is_linear_context = False
+        
+        for i in range(self.max_layers):
+            logits = self.controller(sequence)
+            
+            next_token_logits = logits[-1, 0, :]
+            
+            probs = F.softmax(next_token_logits, dim=-1)
+            m = Categorical(probs)
+            
+            action = m.sample()
+            log_prob = m.log_prob(action)
+            
+            log_probs.append(log_prob)
+            entropy_total += m.entropy()
+            
+            token_str = self.vocab[action.item()]
+            
+            if token_str == "stop":
+                break
+                
+            if token_str == "flatten" or token_str == "avgpool" or token_str.startswith("linear"):
+                is_linear_context = True
+                
+            cfg = self._token_to_cfg(token_str, is_linear_context)
+            if cfg is not None:
+                generated_cfg.append(cfg)
+                
+            action_tensor = action.unsqueeze(0).unsqueeze(0)
+            sequence = torch.cat([sequence, action_tensor], dim=0)
+        if not any(isinstance(layer, LinearCfg) for layer in generated_cfg):
+            generated_cfg.append(FlattenCfg())
+        
+        generated_cfg.append(LinearCfg(in_features=0, out_features=self.out_features, activation=None))
+        
+        return generated_cfg, torch.stack(log_probs).sum(), entropy_total
+
+    def run(self, n_iterations):
+        best_gen = -1
+        
+        initial_score = self.evaluate(self.layers)
+        if initial_score == -float('inf'):
+            initial_score = 0.0 
+        self.baseline = initial_score
+        
+        regression = (initial_score <= 0.0)
+        crash_score = -1000.0 if regression else 0.0
+
+        batch_size = 16
+        iters_without_improvement = 0
+
+        for i in range(n_iterations):
+            self.controller.train()
+            self.ctrl_optimizer.zero_grad()
+            
+            batch_loss = 0
+            improved_this_iter = False
+            
+            for _ in range(batch_size):
+                arch_cfg, log_prob, entropy = self.generate_architecture()
+                
+                raw_score = self.evaluate(arch_cfg)
+                
+                if raw_score == -float('inf'):
+                    reward = crash_score
+                else:
+                    length_penalty = 0.5 * len(arch_cfg) if not regression else 0.0
+                    reward = raw_score - length_penalty
+                
+                advantage = reward - self.baseline
+                
+                batch_loss += (-log_prob * advantage) - (self.entropy_weight * entropy)
+                
+                self.baseline = 0.95 * self.baseline + 0.05 * reward
+
+                if raw_score > self.best_score and raw_score != crash_score:
+                    self.best_score = raw_score
+                    self.best_arch = copy.deepcopy(arch_cfg)
+                    best_gen = i
+                    improved_this_iter = True
+                    print(f"Transformer Iter {i}: New Best Score {self.best_score:.2f} (Depth: {len(arch_cfg)})")
+            
+            if improved_this_iter:
+                iters_without_improvement = 0
+            else:
+                iters_without_improvement += 1
+                
+            if self.entropy_fct is not None:
+                self.entropy_weight = self.entropy_fct(self.entropy_weight, iters_without_improvement)
             
             batch_loss = batch_loss / batch_size
             batch_loss.backward()

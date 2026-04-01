@@ -422,6 +422,7 @@ Atteindre 84% en voyant si peu d'images et en si peu de passages prouve que l'al
 
 Séparation du dataset de train en deux : un pour l'entrainement des poids, l'autre pour obtenir le score qui détermine l'efficacité de l'architecture.
 
+**ATTENTION : le temps d'entrainement représente le temps de la recherche total et non le temps qu'il a fallu pour trouver le meilleur réseau** par exemple ça donne le temps de recherche pour50 épochs même si on a trouvé le meilleur au 7eme.
 
 ```plaintext
 ===========================================
@@ -492,6 +493,24 @@ breast_cancer             | RL Controller          | 99.34 ± 0.88         | 5.2
 fashion_mnist_simple      | RL Controller          | 84.25 ± 1.08         | 84.25    | 24.0   | -1.2     | 2634.16 
 fashion_mnist_resblock    | RL Controller          | 85.55 ± 1.35         | 43.35    | 16.4   | -3.4     | 2443.94 
 ```
+
+---
+**Transformer**
+
+ITERATIONS_OPTIM = 40 (pour tester)
+
+```plaintext
+==================================================================================================================================
+TASK                      | ALGORITHM              | TEST SCORE (Avg±Std) | GAIN     | ITER   | Δ DEPTH  | TIME(s) 
+----------------------------------------------------------------------------------------------------------------------------------
+california_housing        | Transformer            | -0.36 ± 0.04         | 0.10     | 6.8    | +6.2     | 2358.04 
+breast_cancer             | Transformer            | 98.90 ± 0.70         | 8.35     | 18.6   | -0.8     | 56.16   
+fashion_mnist_simple      | Transformer            | 86.85 ± 1.29         | 86.85    | 14.8   | -2.0     | 1302.20 
+fashion_mnist_resblock    | Transformer            | 85.85 ± 1.56         | 43.55    | 24.2   | -2.8     | 1493.90 
+
+Remarque : pour california_housing il a réussi à atteindre 0.31 et pour breast_cancer 100
+```
+
 
 ## RDV
 
