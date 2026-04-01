@@ -228,7 +228,7 @@ class BenchmarkWrapper:
         }
 
 if __name__ == "__main__":
-    tasks = ["california_housing", "breast_cancer", "fashion_mnist_simple", "fashion_mnist_resblock"]
+    tasks = [ "breast_cancer", "fashion_mnist_simple", "fashion_mnist_resblock"]#"california_housing",
     
     optimizers = [
         #("Simulated Annealing", SAOptimizer, {"temp_init": 100, "cooling_rate": 0.8}),

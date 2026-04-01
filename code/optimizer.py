@@ -676,6 +676,7 @@ class TransformerOptimizer(Optimizer):
         
         self.vocab = [
             "conv_3_16", "conv_3_32", "conv_5_16", 
+            "resblock_16", "resblock_32",
             "pool_2", 
             "linear_32", "linear_64", 
             "dropout_0.2", "dropout_0.5",
@@ -689,6 +690,8 @@ class TransformerOptimizer(Optimizer):
         self.baseline = 0.0
         self.entropy_weight = 0.05
 
+
+
     def _token_to_cfg(self, token, is_linear_context):
         if token == "conv_3_16" and not is_linear_context:
             return Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU)
@@ -696,6 +699,20 @@ class TransformerOptimizer(Optimizer):
             return Conv2dCfg(in_channels=0, out_channels=32, kernel_size=3, padding=1, activation=nn.ReLU)
         elif token == "conv_5_16" and not is_linear_context:
             return Conv2dCfg(in_channels=0, out_channels=16, kernel_size=5, padding=2, activation=nn.ReLU)
+        elif token == "resblock_16" and not is_linear_context:
+            sub_layers = [
+                Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU),
+                BatchNorm2dCfg(num_features=16),
+                Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=None)
+            ]
+            return ResBlockCfg(sub_layers=sub_layers, use_projection=True)
+        elif token == "resblock_32" and not is_linear_context:
+            sub_layers = [
+                Conv2dCfg(in_channels=0, out_channels=32, kernel_size=3, padding=1, activation=nn.ReLU),
+                BatchNorm2dCfg(num_features=32),
+                Conv2dCfg(in_channels=0, out_channels=32, kernel_size=3, padding=1, activation=None)
+            ]
+            return ResBlockCfg(sub_layers=sub_layers, use_projection=True)
         elif token == "pool_2" and not is_linear_context:
             return MaxPool2dCfg(kernel_size=2, stride=2, padding=0)
         elif token == "bn2d" and not is_linear_context:
