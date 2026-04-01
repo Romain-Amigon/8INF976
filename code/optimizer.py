@@ -669,7 +669,7 @@ class ControllerTransformer(nn.Module):
         return logits
 
 class TransformerOptimizer(Optimizer):
-    def __init__(self, layers=None, search_space=None, dataset=None, max_layers=8, d_model=64, nhead=4, num_layers=2, lr=0.01, **kwargs):
+    def __init__(self, layers=None, search_space=None, dataset=None, max_layers=8, entropy_weight=0.05, entropy_fct=None, d_model=64, nhead=4, num_layers=2, lr=0.01, **kwargs):
         super().__init__(layers, search_space, dataset)
         self.max_layers = max_layers
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -688,9 +688,19 @@ class TransformerOptimizer(Optimizer):
         self.controller = ControllerTransformer(self.num_tokens, d_model=d_model, nhead=nhead, num_layers=num_layers, max_len=max_layers+5).to(self.device)
         self.ctrl_optimizer = optim.Adam(self.controller.parameters(), lr=lr)
         self.baseline = 0.0
-        self.entropy_weight = 0.05
+        self.entropy_weight = entropy_weight 
+        
+        if entropy_fct is True or entropy_fct == "default":
+            self.entropy_fct = self.variable_entropy
+        else:
+            self.entropy_fct = entropy_fct
 
-
+    def variable_entropy(self, current_weight, iters_without_improvement, patience=5, base=0.05, max_w=0.5):
+        if iters_without_improvement == 0:
+            return base
+        if iters_without_improvement >= patience:
+            return min(max_w, current_weight * 1.5)
+        return current_weight
 
     def _token_to_cfg(self, token, is_linear_context):
         if token == "conv_3_16" and not is_linear_context:
@@ -788,12 +798,14 @@ class TransformerOptimizer(Optimizer):
         crash_score = -1000.0 if regression else 0.0
 
         batch_size = 16
+        iters_without_improvement = 0
 
         for i in range(n_iterations):
             self.controller.train()
             self.ctrl_optimizer.zero_grad()
             
             batch_loss = 0
+            improved_this_iter = False
             
             for _ in range(batch_size):
                 arch_cfg, log_prob, entropy = self.generate_architecture()
@@ -816,7 +828,16 @@ class TransformerOptimizer(Optimizer):
                     self.best_score = raw_score
                     self.best_arch = copy.deepcopy(arch_cfg)
                     best_gen = i
+                    improved_this_iter = True
                     print(f"Transformer Iter {i}: New Best Score {self.best_score:.2f} (Depth: {len(arch_cfg)})")
+            
+            if improved_this_iter:
+                iters_without_improvement = 0
+            else:
+                iters_without_improvement += 1
+                
+            if self.entropy_fct is not None:
+                self.entropy_weight = self.entropy_fct(self.entropy_weight, iters_without_improvement)
             
             batch_loss = batch_loss / batch_size
             batch_loss.backward()

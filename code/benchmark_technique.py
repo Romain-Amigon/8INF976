@@ -228,14 +228,14 @@ class BenchmarkWrapper:
         }
 
 if __name__ == "__main__":
-    tasks = [ "breast_cancer", "fashion_mnist_simple", "fashion_mnist_resblock"]#"california_housing",
+    tasks = [ "breast_cancer", "fashion_mnist_simple"]#"california_housing",, "fashion_mnist_resblock"
     
     optimizers = [
         #("Simulated Annealing", SAOptimizer, {"temp_init": 100, "cooling_rate": 0.8}),
         #("Genetic Algorithm", GeneticOptimizer, {"pop_size": 10, "mutation_rate": 0.3}),
         #("ABC Algorithm", ABCOptimizer, {"pop_size": 10, "limit": 4}),
         #("RL Controller", RLOptimizer, {"max_layers": 50})
-        ("Transformer", TransformerOptimizer, {"max_layers":50})
+        ("Transformer", TransformerOptimizer, {"max_layers":50, "entropy_fct":"default"})
     ]
 
     print("\n" + "="*130)
