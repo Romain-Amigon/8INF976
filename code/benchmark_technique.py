@@ -19,7 +19,7 @@ BATCH_SIZE = 64
 N_SAMPLES_TRAIN_IMG = 2000
 N_SAMPLES_TEST_IMG = 500
 N_STATS_RUNS = 5
-ITERATIONS_OPTIM = 20
+ITERATIONS_OPTIM = 40
 
 def get_dataset(task_type):
     if task_type == 'california_housing':
