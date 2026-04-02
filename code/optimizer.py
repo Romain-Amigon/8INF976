@@ -372,10 +372,11 @@ class GeneticOptimizer(Optimizer):
         return self.best_arch, stats
 
 class ABCOptimizer(Optimizer):
-    def __init__(self, layers=None, search_space=None, pop_size=10, limit=5, **kwargs):
+    def __init__(self, layers=None, search_space=None, pop_size=10, limit=5,patience=0, **kwargs):
         super().__init__(layers, search_space, **kwargs)
         self.pop_size = pop_size
         self.limit = limit
+        self.patience = patience
         self.population = []
         self.fitness = []
         self.trials = []
@@ -392,8 +393,13 @@ class ABCOptimizer(Optimizer):
             if self.fitness[i] > self.best_score and self.fitness[i] != -float('inf'):
                 self.best_score = self.fitness[i]
                 self.best_arch = copy.deepcopy(self.population[i])
-
+        
+        iters_without_improvement = 0
+        best_gen = 0
+        
+        
         for it in range(n_iterations):
+            previous_best = self.best_score
             for i in range(self.pop_size):
                 new_arch = self.neighbor(self.population[i])
                 new_fit = self.evaluate(new_arch)
@@ -443,11 +449,21 @@ class ABCOptimizer(Optimizer):
                     self.trials[i] = 0
 
             print(f"ABC Iter {it}: Best Score {self.best_score:.2f}")
+            
+            if self.best_score > previous_best + 1e-4:
+                iters_without_improvement = 0
+                best_gen = it
+            else:
+                iters_without_improvement += 1
+            
+            if self.patience > 0 and iters_without_improvement >= self.patience:
+                print(f"Early stopping déclenché à l'itération {it} : Aucun gain depuis {self.patience} itérations.")
+                break
 
         stats = {
             "initial_score": initial_score,
             "best_score": self.best_score,
-            "best_iter": it,
+            "best_iter": best_gen,
             "gain": self.best_score - initial_score
         }
         return self.best_arch, stats
