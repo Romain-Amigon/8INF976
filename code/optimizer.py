@@ -34,7 +34,7 @@ class Optimizer(ABC):
         else:
             self.out_features = 1
     
-    def evaluate(self, genome, train_epochs=10):
+def evaluate(self, genome, train_epochs=10,patience = 5):
         try:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             
@@ -67,8 +67,12 @@ class Optimizer(ABC):
 
             optimizer = optim.Adam(model.parameters(), lr=0.001)
             
-            model.train()
+            best_val_acc = 0.0
+            
+            patience_counter = 0
+
             for epoch in range(train_epochs):
+                model.train()
                 for inputs, targets in train_loader:
                     inputs, targets = inputs.to(device), targets.to(device)
                     optimizer.zero_grad()
@@ -85,28 +89,41 @@ class Optimizer(ABC):
                     loss.backward()
                     optimizer.step()
 
-            model.eval()
-            correct = 0
-            total = 0
-            with torch.no_grad():
-                for inputs, targets in val_loader:
-                    inputs, targets = inputs.to(device), targets.to(device)
-                    outputs = model(inputs)
-                    
-                    if task == "binary":
-                        targets = targets.view(-1, 1).float()
-                        predicted = (outputs > 0).float()
-                    else:
-                        targets = targets.long()
-                        if targets.dim() > 1 and targets.shape[1] == 1:
-                            targets = targets.squeeze(1)
-                        _, predicted = outputs.max(1)
+                model.eval()
+                correct = 0
+                total = 0
+                with torch.no_grad():
+                    for inputs, targets in val_loader:
+                        inputs, targets = inputs.to(device), targets.to(device)
+                        outputs = model(inputs)
                         
-                    total += targets.size(0)
-                    correct += predicted.eq(targets).sum().item()
+                        if task == "binary":
+                            targets = targets.view(-1, 1).float()
+                            predicted = (outputs > 0).float()
+                        else:
+                            targets = targets.long()
+                            if targets.dim() > 1 and targets.shape[1] == 1:
+                                targets = targets.squeeze(1)
+                            _, predicted = outputs.max(1)
+                            
+                        total += targets.size(0)
+                        correct += predicted.eq(targets).sum().item()
 
-            if total == 0: return 0.0
-            return 100. * correct / total
+                if total == 0:
+                    current_acc = 0.0
+                else:
+                    current_acc = 100. * correct / total
+
+                if current_acc > best_val_acc:
+                    best_val_acc = current_acc
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+
+                if patience_counter >= patience:
+                    break
+
+            return best_val_acc
 
         except Exception:
             return -float('inf')
