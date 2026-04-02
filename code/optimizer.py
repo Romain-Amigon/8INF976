@@ -34,7 +34,7 @@ class Optimizer(ABC):
         else:
             self.out_features = 1
     
-def evaluate(self, genome, train_epochs=10,patience = 5):
+    def evaluate(self, genome, train_epochs=10,patience = 5):
         try:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             
