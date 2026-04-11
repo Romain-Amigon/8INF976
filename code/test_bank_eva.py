@@ -104,21 +104,46 @@ num_positives = (y_train == 1).sum()
 pos_weight_value = torch.tensor([num_negatives / num_positives], dtype=torch.float32).to(DEVICE)
 
 final_model = DynamicNet(best_sol_final, input_shape=(29,)).to(DEVICE)
+#%%
+num_negatives = (y_train == 0).sum()
+num_positives = (y_train == 1).sum()
+pos_weight_value = torch.tensor([num_negatives / num_positives], dtype=torch.float32).to(DEVICE)
+
+final_model = DynamicNet(best_sol_final, input_shape=( 29,)).to(DEVICE)
+
 criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight_value)
 optimizer = optim.Adam(final_model.parameters(), lr=0.001)
 
-EPOCHS = 30 # Réduit à 30 pour éviter le surapprentissage après la recherche
+EPOCHS = 1
 
 for epoch in range(EPOCHS):
     final_model.train()
+    running_loss = 0.0
+    
     for X_batch, y_batch in train_loader:
         X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
+        
         optimizer.zero_grad()
         outputs = final_model(X_batch)
         loss = criterion(outputs, y_batch)
         loss.backward()
         optimizer.step()
+        
+        running_loss += loss.item()
 
+    final_model.eval()
+    val_loss = 0.0
+    
+    with torch.no_grad():
+        for X_batch, y_batch in val_loader:
+            X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
+            outputs = final_model(X_batch)
+            loss = criterion(outputs, y_batch)
+            val_loss += loss.item()
+            
+    print(f"Epoch {epoch+1}/{EPOCHS} | Train Loss: {running_loss/len(train_loader):.4f} | Val Loss: {val_loss/len(val_loader):.4f}")
+#%%
+from sklearn.metrics import f1_score
 final_model.eval()
 all_probs = []
 all_targets = []
@@ -127,7 +152,9 @@ with torch.no_grad():
     for X_batch, y_batch in test_loader:
         X_batch = X_batch.to(DEVICE)
         outputs = final_model(X_batch)
+        
         probs = torch.sigmoid(outputs)
+        
         all_probs.extend(probs.cpu().numpy())
         all_targets.extend(y_batch.numpy())
 
@@ -137,10 +164,11 @@ all_targets = np.array(all_targets)
 best_f1 = -1
 best_threshold = 0.80
 
-print("\nRecherche du meilleur seuil d'alerte...")
-for thresh in np.arange(0.80, 1.02, 0.02):
+for thresh in np.arange(0.80, 1, 0.01):
     preds = (all_probs > thresh).astype(float)
     f1 = f1_score(all_targets, preds)
+    print(f"Threshold: {thresh:.2f} | F1-Score (Fraud): {f1:.4f}")
+    
     if f1 > best_f1:
         best_f1 = f1
         best_threshold = thresh

@@ -3,6 +3,7 @@ import random
 import copy
 import json
 import types
+import time
 import numpy as np
 import torch
 import torch.nn as nn
@@ -28,25 +29,29 @@ def set_global_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-def evaluate_cifar_proxy(self, genome, train_epochs=4):
+def evaluate_cifar_proxy_vram(self, genome, train_epochs=4):
     try:
-        model = DynamicNet(genome, input_shape=(3, 32, 32))
-        model.to(DEVICE)
-        
+        model = DynamicNet(genome, input_shape=(3, 32, 32)).to(DEVICE)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.001)
         
         best_val_acc = 0.0
         patience = 2
         patience_counter = 0
+        batch_size = 256
+        dataset_size = PROXY_X.size(0)
         
         for epoch in range(train_epochs):
             model.train()
-            for inputs, targets in self.dataset:
-                inputs, targets = inputs.to(DEVICE, non_blocking=True), targets.to(DEVICE, non_blocking=True)
+            permutation = torch.randperm(dataset_size, device=DEVICE)
+            
+            for i in range(0, dataset_size, batch_size):
+                indices = permutation[i:i+batch_size]
+                batch_x, batch_y = PROXY_X[indices], PROXY_Y[indices]
+                
                 optimizer.zero_grad()
-                outputs = model(inputs)
-                loss = criterion(outputs, targets)
+                outputs = model(batch_x)
+                loss = criterion(outputs, batch_y)
                 loss.backward()
                 optimizer.step()
                 
@@ -99,7 +104,7 @@ if __name__ == "__main__":
     full_trainset_final = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train_final)
     testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 
-    test_loader = DataLoader(testset, batch_size=256, shuffle=False, num_workers=8, pin_memory=True)
+    test_loader = DataLoader(testset, batch_size=256, shuffle=False, num_workers=2, pin_memory=True)
 
     seeds = [42, 43, 44]
     all_accuracies = []
@@ -107,26 +112,22 @@ if __name__ == "__main__":
     
     os.makedirs("results", exist_ok=True)
 
+    print("Pré-chargement du dataset Proxy en VRAM...")
+    proxy_size = int(0.5 * len(full_trainset_proxy))
+    indices_proxy = np.random.choice(len(full_trainset_proxy), proxy_size, replace=False)
+    proxy_dataset = Subset(full_trainset_proxy, indices_proxy)
+    
+    temp_proxy_loader = DataLoader(proxy_dataset, batch_size=len(proxy_dataset), shuffle=False)
+    for inputs, targets in temp_proxy_loader:
+        PROXY_X = inputs.to(DEVICE)
+        PROXY_Y = targets.to(DEVICE)
+        break
+
     for current_seed in seeds:
         print(f"\n{'='*50}\nLANCEMENT DE L'EXPÉRIENCE - SEED: {current_seed}\n{'='*50}")
         set_global_seed(current_seed)
         
-        proxy_size = int(0.3 * len(full_trainset_proxy))
-        indices_proxy = np.random.choice(len(full_trainset_proxy), proxy_size, replace=False)
-        proxy_dataset = Subset(full_trainset_proxy, indices_proxy)
-        train_loader_proxy = DataLoader(proxy_dataset, batch_size=256, shuffle=True, num_workers=8, pin_memory=True)
-
-        valset_final = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_test)
-        indices_final = list(range(len(full_trainset_final)))
-        np.random.shuffle(indices_final)
-        split = int(np.floor(0.1 * len(full_trainset_final)))
-        train_idx, val_idx = indices_final[split:], indices_final[:split]
-
-        train_dataset_final = Subset(full_trainset_final, train_idx)
-        val_dataset_final = Subset(valset_final, val_idx)
-
-        train_loader_final = DataLoader(train_dataset_final, batch_size=256, shuffle=True, num_workers=8, pin_memory=True)
-        val_loader_final = DataLoader(val_dataset_final, batch_size=256, shuffle=False, num_workers=8, pin_memory=True)
+        train_loader_final = DataLoader(full_trainset_final, batch_size=256, shuffle=True, num_workers=2, pin_memory=True, persistent_workers=True)
 
         initial_arch = [
             Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU),
@@ -136,26 +137,31 @@ if __name__ == "__main__":
             LinearCfg(in_features=0, out_features=10, activation=None)
         ]
 
-        opt_trans = TransformerOptimizer(layers=initial_arch, max_layers=20, dataset=train_loader_proxy, entropy_fct="default")
-        opt_trans.evaluate = types.MethodType(evaluate_cifar_proxy, opt_trans)
-
+        print("Début de la recherche Transformer sur proxy CIFAR-10...")
+        start_time_trans = time.time()
+        opt_trans = TransformerOptimizer(layers=initial_arch, max_layers=20, dataset=None, entropy_fct="default")
+        opt_trans.evaluate = types.MethodType(evaluate_cifar_proxy_vram, opt_trans)
         best_arch_trans, stats_trans = opt_trans.run(20)
+        time_trans = time.time() - start_time_trans
 
-        opt_abc = ABCOptimizer(layers=best_arch_trans, dataset=train_loader_proxy, limit=5, patience=5)
-        opt_abc.evaluate = types.MethodType(evaluate_cifar_proxy, opt_abc)
-
+        print("\nDébut de l'affinage ABC sur proxy CIFAR-10...")
+        start_time_abc = time.time()
+        opt_abc = ABCOptimizer(layers=best_arch_trans, dataset=None, limit=5, patience=5)
+        opt_abc.evaluate = types.MethodType(evaluate_cifar_proxy_vram, opt_abc)
         best_sol_final, optim_stats_abc = opt_abc.run(15)
+        time_abc = time.time() - start_time_abc
 
+        total_search_time = time_trans + time_abc
+
+        print("\nEntraînement final de l'architecture optimale sur 100% de CIFAR-10...")
+        start_time_train = time.time()
+        
         final_model = DynamicNet(best_sol_final, input_shape=(3, 32, 32)).to(DEVICE)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(final_model.parameters(), lr=0.001)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
 
         EPOCHS = 100
-        patience_limit = 10
-        patience_counter = 0
-        best_val_loss = float('inf')
-        best_weights = None
 
         for epoch in range(EPOCHS):
             final_model.train()
@@ -172,28 +178,11 @@ if __name__ == "__main__":
                 
             scheduler.step()
             
-            final_model.eval()
-            val_loss = 0.0
-            with torch.no_grad():
-                for inputs, targets in val_loader_final:
-                    inputs, targets = inputs.to(DEVICE, non_blocking=True), targets.to(DEVICE, non_blocking=True)
-                    outputs = final_model(inputs)
-                    loss = criterion(outputs, targets)
-                    val_loss += loss.item()
-                    
-            val_loss = val_loss / len(val_loader_final)
-            
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                best_weights = copy.deepcopy(final_model.state_dict())
-                patience_counter = 0
-            else:
-                patience_counter += 1
-                
-            if patience_counter >= patience_limit:
-                break
+            if (epoch + 1) % 10 == 0:
+                print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {running_loss/len(train_loader_final):.4f}")
 
-        final_model.load_state_dict(best_weights)
+        time_train = time.time() - start_time_train
+
         final_model.eval()
         
         all_preds = []
@@ -211,18 +200,25 @@ if __name__ == "__main__":
         final_accuracy = report_dict['accuracy']
         
         print(f"--> Accuracy finale pour la seed {current_seed} : {final_accuracy*100:.2f}%")
+        print(f"Temps de recherche NAS : {total_search_time:.2f} s | Temps d'entraînement final : {time_train:.2f} s")
         all_accuracies.append(final_accuracy)
 
         torch.save(final_model.state_dict(), f"results/best_model_seed_{current_seed}.pth")
         
         all_results[f"seed_{current_seed}"] = {
+            "search_times": {
+                "transformer_time_s": time_trans,
+                "abc_time_s": time_abc,
+                "total_search_time_s": total_search_time
+            },
+            "final_training_time_s": time_train,
             "transformer_stats": stats_trans,
             "abc_stats": optim_stats_abc,
-            "best_val_loss": best_val_loss,
-            "epochs_trained": epoch + 1,
             "final_accuracy": final_accuracy,
             "report": report_dict
         }
+        with open(f"results/academic_results_{current_seed}.json", "w", encoding="utf-8") as f:
+            json.dump(all_results, f, indent=4)
 
     mean_acc = np.mean(all_accuracies) * 100
     std_acc = np.std(all_accuracies) * 100
@@ -247,4 +243,6 @@ if __name__ == "__main__":
         f.write(f"Résultat final : {mean_acc:.2f}% ± {std_acc:.2f}%\n\n")
         f.write("Détails par seed :\n")
         for idx, seed in enumerate(seeds):
-            f.write(f" - Seed {seed} : {all_accuracies[idx]*100:.2f}%\n")
+            search_t = all_results[f"seed_{seed}"]["search_times"]["total_search_time_s"]
+            train_t = all_results[f"seed_{seed}"]["final_training_time_s"]
+            f.write(f" - Seed {seed} : {all_accuracies[idx]*100:.2f}% (Recherche: {search_t/60:.2f} min | Entraînement: {train_t/60:.2f} min)\n")

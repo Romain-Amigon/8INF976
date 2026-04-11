@@ -293,6 +293,7 @@ class SAOptimizer(Optimizer):
                     self.best_score = current_score
                     self.best_arch = copy.deepcopy(current_sol)
                     best_iter = i
+                    print(f"iter {i}: New Best! Score {self.best_score:.2f}")
             self.T *= self.alpha
             
         stats = {
