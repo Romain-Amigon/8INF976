@@ -217,29 +217,29 @@ Pour le `TransformerOptimizer`, le poids d'entropie ($\lambda$) est dynamique (`
 ## Schéma pipeline optimiseurs
 ```mermaid
 flowchart TD
-    %% Définition des styles
-    classDef startend fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef process fill:#e1f5fe,stroke:#333,stroke-width:1px;
-    classDef decision fill:#fff9c4,stroke:#333,stroke-width:1px;
-    classDef highlight fill:#c8e6c9,stroke:#333,stroke-width:2px;
+    %% Définition des styles (Ajout de color:#000 pour forcer le texte en noir)
+    classDef startend fill:#f9f,stroke:#333,stroke-width:2px,color:#000;
+    classDef process fill:#e1f5fe,stroke:#333,stroke-width:1px,color:#000;
+    classDef decision fill:#fff9c4,stroke:#333,stroke-width:1px,color:#000;
+    classDef highlight fill:#c8e6c9,stroke:#333,stroke-width:2px,color:#000;
 
-    %% Structure du graphe
+    %% Structure du graphe (LR = Left to Right pour mieux s'afficher sur GitHub)
     Start([Start Search Process]) --> InitArch["INITIAL ARCHITECTURE"]
     
-    InitArch --> EvalInit["EVALUATE Initial Architecture<br/>(Train on Proxy, Get Base Score)"]
-    EvalInit --> SetBest["Set as Best Architecture & Score"]
-    SetBest --> LoopCheck{"LOOP:<br/>Iterations < Max?"}
+    InitArch --> EvalInit["EVALUATE Initial Arch.<br/>(Train on Proxy)"]
+    EvalInit --> SetBest["Set as Best Arch. & Score"]
+    SetBest --> LoopCheck{"LOOP:<br/>Iter < Max?"}
 
-    LoopCheck -- Yes --> GenNew["Generate NEW ARCHITECTURE<br/>(via Mutation / Transformer / RNN)"]
-    GenNew --> EvalNew["EVALUATE New Architecture"]
-    EvalNew --> Compare{"Is New Score ><br/>Best Score?"}
+    LoopCheck -- Yes --> GenNew["Generate NEW ARCH.<br/>(Mutation / Transf.)"]
+    GenNew --> EvalNew["EVALUATE New Arch."]
+    EvalNew --> Compare{"New Score ><br/>Best Score?"}
 
-    Compare -- Yes --> UpdateBest["Update Best Architecture & Score"]
-    UpdateBest --> ResetPatience["Reset Patience Counter"]
-    Compare -- No --> IncPatience["Increment Patience Counter"]
+    Compare -- Yes --> UpdateBest["Update Best Arch. & Score"]
+    UpdateBest --> ResetPatience["Reset Patience"]
+    Compare -- No --> IncPatience["Increment Patience"]
 
     ResetPatience --> LoopCheck
-    IncPatience --> EarlyStop{"Early Stopping<br/>Triggered?"}
+    IncPatience --> EarlyStop{"Early Stop<br/>Triggered?"}
     
     EarlyStop -- No --> LoopCheck
     EarlyStop -- Yes --> End([Return BEST ARCHITECTURE])
