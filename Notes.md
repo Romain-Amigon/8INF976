@@ -775,6 +775,26 @@ Détails par seed :
  - Seed 44 : 76.46% (Recherche: 140.89 min | Entraînement: 20.26 min) ( abc iter 11)
 ```
 
+```plaintext
+
+opt_sa.run(100)
+
+Rapport Expériences NAS Mémétique (CIFAR-10)
+=========================================================
+
+Nombre d'exécutions indépendantes : 3
+Graines aléatoires utilisées : [42, 43, 44]
+
+Résultat final : 73.90% ± 3.46%
+
+Détails par seed :
+ - Seed 42 : 77.89% (Recherche: 121.00 min | Entraînement: 53.02 min) (sa iter 41)
+ - Seed 43 : 69.46% (Recherche: 82.99 min | Entraînement: 14.94 min) (sa iter 32)
+ - Seed 44 : 74.36% (Recherche: 76.92 min | Entraînement: 47.76 min) (sa iter 57)
+
+```
+
+![alt text](image-5.png)
 ## RDV
 
 #### RDV 26/01

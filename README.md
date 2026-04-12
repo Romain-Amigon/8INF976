@@ -24,8 +24,14 @@ $$f(\theta) = g_{\theta}$$
 
 L'objectif central de ce projet est donc de comparer différentes méthodes d'optimisation (Descente de Gradient, métaheuristiques, apprentissage par renforcement, etc.) pour déterminer l'architecture optimale $\theta^*$ qui maximise les performances de la fonction $f$.
 
-> **[TODO : Insérer Schéma 1 - Vue globale]** > *Flux : Dataset $\rightarrow$ Optimizer $\rightarrow$ Train $\rightarrow$ Best NN*
+```mermaid
+graph LR
+    A[RESEARCH ITERATIONS] --> B{OPTIMIZER}
+    D[DATASET] --> B{OPTIMIZER}
+    E[PARAMETERS] --> B{OPTIMIZER}
+    B-->|BEST ARCHITECTURE| C[FINAL TRAIN]
 
+``` 
 
 
 Pour mener à bien cette étude, j'ai décidé de comparer les méthodes suivantes :
@@ -35,7 +41,7 @@ Pour mener à bien cette étude, j'ai décidé de comparer les méthodes suivant
 * **Réseau géniteur LSTM par RL :** L'approche classique de l'état de l'art pour la génération de séquences.
 * **Réseau géniteur Transformer par RL :** Mon innovation pour ce projet.
 
-Pour résumer, on formalise un forward dans un réseu de neurone comme ceci : $f(\theta)(W)(X)=y$, avec $\theta$ l'architecture du réseau, optimisée avec mes méthodes, W les poids, optimisé par entraînement, et X les données d'entrée, y la sortie.
+Pour résumer, on formalise un forward dans un réseau de neurone : $f(\theta)(W)(X)=y$, avec $\theta$ l'architecture du réseau, optimisée avec mes méthodes, W les poids, optimisé par entraînement, et X les données d'entrée, y la sortie.
 
 ---
 
@@ -208,10 +214,55 @@ Pour éviter que le générateur ne subisse une convergence prématurée (géné
 $Loss = (- \log(P) \times Avantage) - (\lambda \times Entropie)$
 Pour le `TransformerOptimizer`, le poids d'entropie ($\lambda$) est dynamique (`variable_entropy`). Si le contrôleur stagne pendant plusieurs itérations, le poids de l'entropie augmente automatiquement, le forçant à "paniquer" et à explorer de nouvelles régions de l'espace de recherche.
 
+## Schéma pipeline optimiseurs
+```mermaid
+flowchart TD
+    %% Définition des styles
+    classDef startend fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef process fill:#e1f5fe,stroke:#333,stroke-width:1px;
+    classDef decision fill:#fff9c4,stroke:#333,stroke-width:1px;
+    classDef highlight fill:#c8e6c9,stroke:#333,stroke-width:2px;
 
+    %% Structure du graphe
+    Start([Start Search Process]) --> InitArch["INITIAL ARCHITECTURE"]
+    
+    InitArch --> EvalInit["EVALUATE Initial Architecture<br/>(Train on Proxy, Get Base Score)"]
+    EvalInit --> SetBest["Set as Best Architecture & Score"]
+    SetBest --> LoopCheck{"LOOP:<br/>Iterations < Max?"}
 
-> **[TODO : Insérer Schéma 2 - Boucle de l'optimiseur]**
-> *Flux : Modèle de base $\rightarrow$ Evaluate $\rightarrow$ Nouvelle architecture (avec boucle de rétroaction)*
+    LoopCheck -- Yes --> GenNew["Generate NEW ARCHITECTURE<br/>(via Mutation / Transformer / RNN)"]
+    GenNew --> EvalNew["EVALUATE New Architecture"]
+    EvalNew --> Compare{"Is New Score ><br/>Best Score?"}
+
+    Compare -- Yes --> UpdateBest["Update Best Architecture & Score"]
+    UpdateBest --> ResetPatience["Reset Patience Counter"]
+    Compare -- No --> IncPatience["Increment Patience Counter"]
+
+    ResetPatience --> LoopCheck
+    IncPatience --> EarlyStop{"Early Stopping<br/>Triggered?"}
+    
+    EarlyStop -- No --> LoopCheck
+    EarlyStop -- Yes --> End([Return BEST ARCHITECTURE])
+    LoopCheck -- No --> End
+
+    %% Attribution des styles
+    class Start,End startend;
+    class InitArch,EvalInit,SetBest,EvalNew,ResetPatience,IncPatience process;
+    class LoopCheck,Compare,EarlyStop decision;
+    class GenNew,UpdateBest highlight;
+```
+
+### EVALUATE 
+
+```mermaid
+graph LR
+    A[MODEL] --> B{SHORT TRAIN}
+    C[SPLIT TRAIN VALID] --> B
+    B --> D[EVALUATE ON VALID]
+    C --> D
+    D --> E(SCORE)
+
+``` 
 
 ---
 
@@ -369,7 +420,113 @@ weighted avg       1.00      1.00      1.00     56962
 **Analyse Métier** : 
 - Rappel (0.84) : Le modèle détecte 84% des fraudes réelles. C'est un excellent filet de sécurité.
 - Précision (0.73) : Quand le modèle déclenche une alerte, il a raison dans 73% des cas. Cela signifie que 27% des alertes sont des "faux positifs" . C'est un ratio tout à fait acceptable en production.
-![alt text](image-2.png)
+<img src="image-2.png" alt="alt text" width="50%">
+
+
+
+---
+
+### 4.4 CIFAR 10
+Le biut est de comparer les différents optimiseurs au combo transformer+ABC, qui doit donc déterminer de façon totalement autonome une architecture
+
+La recherche d'architecture se fait sur 50 % du dataset suivi d'un entrainement classique de 100 epochs (d'habitude pour cifar c'est plutôt fr l'ordre de 400) sur 100% dud dataset de train.
+
+malgré le fixage des seeds globales, l'utilisation de méthodes d'attention sur processeurs graphiques asynchrones (CUDA) introduit un léger non-déterminisme, peu important, justifiant la nécessité d'effectuer plusieurs exécutions indépendantes pour obtenir des résultats statistiquement robustes
+
+```plaintext
+
+opt_trans.run(20)
+opt_abc.run(15)
+
+Rapport Expériences NAS Mémétique (CIFAR-10)
+=========================================================
+
+Nombre d'exécutions indépendantes : 3
+Graines aléatoires utilisées : [42, 43, 44]
+
+Résultat final : 83.48% ± 1.98%
+
+Détails par seed :
+ - Seed 42 : 84.29% (Recherche: 301.25 min | Entraînement: 10.84 min) (trans trouvé iter 1, abc iter 9)
+ - Seed 43 : 85.39% (Recherche: 285.35 min | Entraînement: 9.60 min) (trans trouvé iter 5, abc iter 8)
+ - Seed 44 : 80.75% (Recherche: 290.53 min | Entraînement: 8.19 min) (trans trouvé iter 12, abc iter 3)
+
+```
+
+```plaintext
+
+opt_abc.run(30)
+
+Rapport Expériences NAS Mémétique (CIFAR-10)
+=========================================================
+
+Nombre d'exécutions indépendantes : 3
+Graines aléatoires utilisées : [42, 43, 44]
+
+Résultat final : 79.76% ± 2.37%
+
+Détails par seed :
+ - Seed 42 : 80.92% (Recherche: 202.30 min | Entraînement: 48.40 min) ( abc iter 15)
+ - Seed 43 : 81.91% (Recherche: 558.99 min | Entraînement: 43.19 min) (!! Retirer 4h30 car l'ordinateur s'est mis en veille) (abc iter 20)
+ - Seed 44 : 76.46% (Recherche: 140.89 min | Entraînement: 20.26 min) ( abc iter 11)
+```
+
+```plaintext
+
+opt_sa.run(100)
+
+Rapport Expériences NAS Mémétique (CIFAR-10)
+=========================================================
+
+Nombre d'exécutions indépendantes : 3
+Graines aléatoires utilisées : [42, 43, 44]
+
+Résultat final : 73.90% ± 3.46%
+
+Détails par seed :
+ - Seed 42 : 77.89% (Recherche: 121.00 min | Entraînement: 53.02 min) (sa iter 41)
+ - Seed 43 : 69.46% (Recherche: 82.99 min | Entraînement: 14.94 min) (sa iter 32)
+ - Seed 44 : 74.36% (Recherche: 76.92 min | Entraînement: 47.76 min) (sa iter 57)
+
+```
+
+
+
+Nous avons comparé trois approches :
+
+1.  **Recuit Simulé (SA) :** Optimisation stochastique de base avec un budget de 100 itérations.
+2.  **ABC Seul (Cold-Start) :** L'algorithme en essaim cherchant une architecture en partant de zéro, avec un budget de 30 itérations.
+3.  **Transformer + ABC (Hybride Mémétique) :** Le Transformer génère une architecture initiale saine (budget de 20 itérations), qui est ensuite affinée par l'ABC (budget de 15 itérations).
+
+**Tableau 4 : Résultats détaillés des recherches NAS sur CIFAR-10**
+
+| Algorithme | Budget (Itérations) | Graine | Précision Finale | Itération de l'Optimum | Temps de Recherche |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Recuit Simulé** | 100 | Seed 42 | 77.89% | Iter 41 | 121.00 min |
+| | | Seed 43 | 69.46% | Iter 32 | 82.99 min |
+| | | Seed 44 | 74.36% | Iter 57 | 76.92 min |
+| | | **Moyenne** | **73.90% ± 3.46%** | - | - |
+| **ABC Seul** | 30 | Seed 42 | 80.92% | Iter 15 | 202.30 min |
+| | | Seed 43 | 81.91% | Iter 20 | \~ 289.00 min\* |
+| | | Seed 44 | 76.46% | Iter 11 | 140.89 min |
+| | | **Moyenne**| **79.76% ± 2.37%** | - | - |
+| **Transf. + ABC** | 20 (Transf) <br>+ 15 (ABC) | Seed 42 | 84.29% | Trans: 1, ABC: 9 | 301.25 min |
+| | | Seed 43 | **85.39%** | Trans: 5, ABC: 8 | 285.35 min |
+| | | Seed 44 | 80.75% | Trans: 12, ABC: 3 | 290.53 min |
+| | | **Moyenne**| **83.48% ± 1.98%** | - | - |
+
+\*(Note méthodologique : *Le temps de recherche pour l'ABC Seul sur la graine 43 a été ajusté en soustrayant 4h30 de délai induit par une mise en veille matérielle du processeur de calcul).*
+
+**Analyse de l'Étude d'Ablation et de la Convergence :**
+L'intégration du détail des itérations met en lumière le comportement interne de nos optimiseurs :
+
+  * **L'errance stochastique (SA) :** Le Recuit Simulé est le plus rapide en temps de calcul pur, mais s'avère hautement instable (écart-type de ± 3.46%). La graine 43 s'est effondrée à 69.46%. De plus, on remarque qu'il consomme jusqu'à la moitié de son budget (Iter 41 et 57) pour trouver une architecture qui reste largement sous-optimale, prouvant son incapacité à explorer efficacement un espace topologique discret.
+  * **Le problème du "Cold Start" (ABC Seul) :** L'algorithme ABC améliore drastiquement les résultats (79.76%). Cependant, livré à lui-même, il est fortement dépendant de son initialisation aléatoire (chute à 76.46% sur la graine 44). Les logs montrent qu'il lui faut souvent entre 11 et 20 itérations pour extraire une architecture correcte du hasard, gaspillant ainsi une grande partie de son budget dans des zones peu prometteuses de l'espace de recherche.
+  * **La puissance du "Warm Start" (Transformer + ABC) :** L'hybridation surpasse largement les méthodes isolées. L'absence du Transformer dans le pipeline provoque une chute massive des performances de **-3.72 points**. Fait remarquable : le Transformer trouve généralement une excellente ossature de base très tôt dans le processus (dès l'itération 1 ou 5 pour les meilleures graines). Il agit comme un filtre macro-topologique ultra-efficace. L'ABC prend ensuite le relais et trouve son optimum de micro-exploitation (réglage des hyperparamètres continus) vers le milieu de son budget (itérations 8 et 9).
+
+
+
+<img src="image-5.png" alt="alt text" width="50%">
 
 ---
 ## Annexe
