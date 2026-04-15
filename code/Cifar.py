@@ -29,29 +29,25 @@ def set_global_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-def evaluate_cifar_proxy_vram(self, genome, train_epochs=4):
+def evaluate_cifar_proxy(self, genome, train_epochs=4):
     try:
-        model = DynamicNet(genome, input_shape=(3, 32, 32)).to(DEVICE)
+        model = DynamicNet(genome, input_shape=(3, 32, 32))
+        model.to(DEVICE)
+        
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.001)
         
         best_val_acc = 0.0
         patience = 2
         patience_counter = 0
-        batch_size = 256
-        dataset_size = PROXY_X.size(0)
         
         for epoch in range(train_epochs):
             model.train()
-            permutation = torch.randperm(dataset_size, device=DEVICE)
-            
-            for i in range(0, dataset_size, batch_size):
-                indices = permutation[i:i+batch_size]
-                batch_x, batch_y = PROXY_X[indices], PROXY_Y[indices]
-                
+            for inputs, targets in self.dataset:
+                inputs, targets = inputs.to(DEVICE, non_blocking=True), targets.to(DEVICE, non_blocking=True)
                 optimizer.zero_grad()
-                outputs = model(batch_x)
-                loss = criterion(outputs, batch_y)
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
                 loss.backward()
                 optimizer.step()
                 
@@ -59,6 +55,7 @@ def evaluate_cifar_proxy_vram(self, genome, train_epochs=4):
             correct = 0
             total = 0
             with torch.no_grad():
+                # On utilise un test_loader_proxy allégé si besoin, ou on garde le test_loader global
                 for inputs, targets in test_loader:
                     inputs, targets = inputs.to(DEVICE, non_blocking=True), targets.to(DEVICE, non_blocking=True)
                     outputs = model(inputs)
@@ -104,6 +101,7 @@ if __name__ == "__main__":
     full_trainset_final = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train_final)
     testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 
+    # Pour l'évaluation rapide, on peut garder num_workers=2 ou 0
     test_loader = DataLoader(testset, batch_size=256, shuffle=False, num_workers=2, pin_memory=True)
 
     seeds = [42, 43, 44]
@@ -112,21 +110,16 @@ if __name__ == "__main__":
     
     os.makedirs("results", exist_ok=True)
 
-    print("Pré-chargement du dataset Proxy en VRAM...")
-    proxy_size = int(0.5 * len(full_trainset_proxy))
-    indices_proxy = np.random.choice(len(full_trainset_proxy), proxy_size, replace=False)
-    proxy_dataset = Subset(full_trainset_proxy, indices_proxy)
-    
-    temp_proxy_loader = DataLoader(proxy_dataset, batch_size=len(proxy_dataset), shuffle=False)
-    for inputs, targets in temp_proxy_loader:
-        PROXY_X = inputs.to(DEVICE)
-        PROXY_Y = targets.to(DEVICE)
-        break
-
     for current_seed in seeds:
         print(f"\n{'='*50}\nLANCEMENT DE L'EXPÉRIENCE - SEED: {current_seed}\n{'='*50}")
         set_global_seed(current_seed)
         
+        proxy_size = int(0.5 * len(full_trainset_proxy))
+        indices_proxy = np.random.choice(len(full_trainset_proxy), proxy_size, replace=False)
+        proxy_dataset = Subset(full_trainset_proxy, indices_proxy)
+        # num_workers=0 est souvent plus rapide sous Windows pour les appels très fréquents
+        train_loader_proxy = DataLoader(proxy_dataset, batch_size=256, shuffle=True, num_workers=0, pin_memory=True)
+
         train_loader_final = DataLoader(full_trainset_final, batch_size=256, shuffle=True, num_workers=2, pin_memory=True, persistent_workers=True)
 
         initial_arch = [
@@ -139,15 +132,15 @@ if __name__ == "__main__":
 
         print("Début de la recherche Transformer sur proxy CIFAR-10...")
         start_time_trans = time.time()
-        opt_trans = TransformerOptimizer(layers=initial_arch, max_layers=20, dataset=None, entropy_fct="default")
-        opt_trans.evaluate = types.MethodType(evaluate_cifar_proxy_vram, opt_trans)
+        opt_trans = TransformerOptimizer(layers=initial_arch, max_layers=20, dataset=train_loader_proxy, entropy_fct="default")
+        opt_trans.evaluate = types.MethodType(evaluate_cifar_proxy, opt_trans)
         best_arch_trans, stats_trans = opt_trans.run(20)
         time_trans = time.time() - start_time_trans
 
         print("\nDébut de l'affinage ABC sur proxy CIFAR-10...")
         start_time_abc = time.time()
-        opt_abc = ABCOptimizer(layers=best_arch_trans, dataset=None, limit=5, patience=5)
-        opt_abc.evaluate = types.MethodType(evaluate_cifar_proxy_vram, opt_abc)
+        opt_abc = ABCOptimizer(layers=best_arch_trans, dataset=train_loader_proxy, limit=5, patience=5)
+        opt_abc.evaluate = types.MethodType(evaluate_cifar_proxy, opt_abc)
         best_sol_final, optim_stats_abc = opt_abc.run(15)
         time_abc = time.time() - start_time_abc
 

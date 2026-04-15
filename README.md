@@ -3,6 +3,8 @@
 
 **AMIGON Romain**
 
+[https://github.com/Romain-Amigon/8INF976](https://github.com/Romain-Amigon/8INF976)
+
 ## 1.Introduction
 
 Le but de ce cours était de mener un projet sur les méthodes d'optimisation des architectures des réseaux de neurones (Neural Architecture Search - NAS).
@@ -134,7 +136,7 @@ Le fichier `optimizer.py` regroupe l'intelligence algorithmique du projet. Pour 
 class Optimizer(ABC):
     def __init__(self, layers, search_space=None, dataset=None)
 ```
-#### 3.3.1 Le système d'évaluation dynamique (La fonction `evaluate`)
+#### 3.3.1 La fonction `evaluate`
 La fonction `evaluate` est la pierre angulaire du framework. Elle agit comme un Proxy d'évaluation. Son rôle n'est pas d'entraîner le réseau jusqu'à convergence absolue, mais d'estimer son potentiel le plus rapidement possible.
 Il n'y a notamment une séparation du dataset fourni avec 70% qui sert à entrainer le modèle et 30% a déterminer son score
 J'ai conçu cette fonction pour qu'elle soit totalement agnostique au problème :
@@ -524,10 +526,69 @@ L'intégration du détail des itérations met en lumière le comportement intern
   * **Le problème du "Cold Start" (ABC Seul) :** L'algorithme ABC améliore drastiquement les résultats (79.76%). Cependant, livré à lui-même, il est fortement dépendant de son initialisation aléatoire (chute à 76.46% sur la graine 44). Les logs montrent qu'il lui faut souvent entre 11 et 20 itérations pour extraire une architecture correcte du hasard, gaspillant ainsi une grande partie de son budget dans des zones peu prometteuses de l'espace de recherche.
   * **La puissance du "Warm Start" (Transformer + ABC) :** L'hybridation surpasse largement les méthodes isolées. L'absence du Transformer dans le pipeline provoque une chute massive des performances de **-3.72 points**. Fait remarquable : le Transformer trouve généralement une excellente ossature de base très tôt dans le processus (dès l'itération 1 ou 5 pour les meilleures graines). Il agit comme un filtre macro-topologique ultra-efficace. L'ABC prend ensuite le relais et trouve son optimum de micro-exploitation (réglage des hyperparamètres continus) vers le milieu de son budget (itérations 8 et 9).
 
-
+De plus l'actuel état de l'art fait appel à de nombreux blocs complexes que je n'ai pas implémentés.
 
 <img src="image-5.png" alt="alt text" width="50%">
 
+### 4.5 CIFAR 100
+
+J'ai aussi essayé sur CIFAR-100 avec la recherche d'architecture et l'entrainement avec 100% du dataset de train.
+
+```plaintext
+
+Rapport Académique - Expériences NAS Mémétique (CIFAR-100)
+=========================================================
+
+Nombre d'exécutions indépendantes : 3
+Graines aléatoires utilisées : [42, 43, 44]
+
+Résultat final : 52.23% ± 1.77%
+
+Détails par seed :
+ - Seed 42 : 54.73% (Recherche: 480.86 min | Entraînement: 33.98 min)  (trans trouvé iter 0, abc iter 13)
+ - Seed 43 : 51.15% (Recherche: 346.00 min | Entraînement: 18.71 min) (trans trouvé iter 16, abc iter 4)
+ - Seed 44 : 50.82% (Recherche: 367.31 min | Entraînement: 19.15 min) (trans trouvé iter 6, abc iter 5)
+
+```
+
+Bien que la précision absolue (52.23%) soit inférieure à celle obtenue sur CIFAR-10, ce résultat met en lumière deux conclusions fondamentales sur notre approche NAS :
+
+1. La validation de l'efficience  :
+    L'algorithme parvient à converger vers une architecture en un temps de 5,7 à 8 heures sur un simple GPU (RTX 3060). Dans la littérature scientifique, la recherche d'architectures sur CIFAR-100 nécessite couramment des dizaines, voire des centaines de Jours-GPU. Notre contrôleur mémétique prouve ici qu'il est capable de naviguer dans un espace topologique complexe de manière extrêmement économique.
+
+2. Le goulot d'étranglement de l'Espace de Recherche  :
+    Le plafonnement du score final n'est pas imputable à une défaillance de l'optimiseur (les journaux montrent que le Transformer et l'ABC trouvent rapidement des optimums locaux valides), mais aux limites intrinsèques des briques de construction qui leur sont fournies. Pour résoudre CIFAR-100 avec des scores supérieurs à 75% from scratch (sans apprentissage par transfert), l'état de l'art s'appuie sur des micro-architectures hautement complexes (cellules Inception, Dense Blocks, Inverted Residuals).
+    Notre framework, restreint à des convolutions et couches denses standards, a logiquement atteint son plafond d'abstraction mathématique face à la complexité de 100 classes visuelles distinctes.
+
+# 5. Conclusion
+
+L'objectif initial de ce projet était de remettre en question la conception empirique des réseaux de neurones ("par expérience") et de proposer une solution automatisée, mathématiquement formalisée et respectueuse des contraintes matérielles. Au terme de cette étude, plusieurs conclusions majeures émergent.
+
+Premièrement, la formalisation du NAS comme l'optimisation des arguments d'une fonction d'architecture s'est révélée hautement fonctionnelle. Le framework modulaire développé from scratch a démontré que les métaheuristiques, en particulier l'algorithme des Colonies d'Abeilles (ABC), sont capables de naviguer efficacement dans un espace topologique complexe. Plus important encore, cette approche offre une transparence et une modularité totales à l'utilisateur. Comme l'a prouvé le cas d'usage sur la détection de fraude, il suffit de modifier la fonction d'évaluation (ex: optimiser le F1-Score plutôt que l'Accuracy) pour que le système génère instantanément une architecture adaptée à des contraintes métiers spécifiques, là où les approches manuelles auraient échoué.
+
+Deuxièmement, l'intégration de modèles génératifs apprenant à concevoir d'autres réseaux (NAS par Apprentissage par Renforcement) a franchi un cap par rapport aux métaheuristiques classiques. L'approche hybride et mémétique développée dans ce projet — utilisant un Transformer auto-régressif pour définir une ossature robuste (Warm-Start), suivie d'un affinage par algorithme ABC — a permis d'atteindre des performances très compétitives sur la vision par ordinateur (jusqu'à 85.39% sur CIFAR-10). L'introduction d'une fonction de récompense multi-objective a également prouvé qu'il était possible d'automatiser la lutte contre l'obésité des réseaux en pénalisant algorithmiquement la profondeur inutile.
+
+Enfin, ce projet démontre la viabilité d'un "NAS Frugal". Là où l'état de l'art historique exigeait des milliers de Jours-GPU, les architectures proposées ici ont été découvertes en quelques heures sur un simple processeur graphique grand public, démocratisant ainsi l'accès à la recherche d'architectures neuronales.
+
+De plus la combinaison des différentes méthodes pour générer et optimiser des architectures sans aucune intervention humaine st possible.
+
+## 5.2 Ouverture
+
+Si les résultats obtenus valident l'architecture logicielle et les algorithmes du framework, ce projet ouvre la voie à plusieurs axes d'amélioration. 
+
+* **Enrichissement de l'Espace de Recherche (Search Space) :** Comme l'a mis en évidence le stress-test sur CIFAR-100 (plafonnant à ~52%), la performance du réseau généré reste bornée par les briques mathématiques mises à sa disposition. L'ajout de macro-cellules modernes (comme des *Inverted Residuals*, des mécanismes d'attention spatiale, ou des *Dense Blocks*) dans la librairie `layer_classes` permettrait au Transformer d'attaquer des bases de données beaucoup plus complexes sans nécessiter de modification de l'algorithme de recherche lui-même.
+* **Intégration des "Zero-Cost Proxies" :** Pour pousser la frugalité encore plus loin, l'entraînement du proxy (actuellement sur quelques époques) pourrait être remplacé ou assisté par des métriques d'évaluation sans entraînement (comme *SynFlow* ou la matrice d'information de Fisher). Cela permettrait de filtrer les architectures générées en quelques millisecondes plutôt qu'en plusieurs minutes.
+* **Optimisation Multi-Objectifs stricte (Front de Pareto) :** Actuellement, la taille du réseau est gérée par une simple pénalité linéaire dans la fonction de récompense du RL. Une évolution naturelle serait d'implémenter un véritable algorithme de tri non dominé (comme NSGA-II) pour laisser l'utilisateur final choisir son modèle sur un front de Pareto explicite opposant Précision, Temps d'inférence, et Empreinte mémoire (Hardware-Aware NAS).
+
+En définitive, ce projet confirme que la conception des réseaux de neurones est en train de basculer d'un artisanat empirique vers une ingénierie automatisée, générative et mesurable.
+
+## 5.3 Possibilité d'utilisation du projet
+
+Ce projet peut bien sûr être utilisé pour générer une architecture optimisée pour un problème, plutôt qu'un modèle *overkill* créé par un humain ou non adaptée. Cependant d'autres idées me sont venues.
+
+- Avec l'utilisation de LLM pour coder, on peut lui demander de générer une architecture, il va en générer une selon les probabilité de ses connaisances mais pas forcèmenent adapté au problèmz, surtout un problème nouveau. Le projet permert de générer automatiquement, sans aucune interaction humaine, des réseaux variés et efficace, ce qui permettrait d'entrainer un modèle spécialement sur une grande variété de modèle et de problème sans nécessité une génération de dataset humaine
+- En production, les données évoluent constamment, particulièrement dans des domaines comme la détection de fraude. Plutôt que de simplement mettre à jour les poids d'un réseau obsolète, notre algorithme pourrait être déclenché en arrière-plan pour faire muter légèrement l'architecture en temps réel, garantissant un pipeline d'apprentissage véritablement évolutif et résilient au temps.
+- La pénalité de profondeur intégrée à notre contrôleur RL rend ce framework particulièrement adapté à l'intelligence artificielle embarquée. Il permettrait de concevoir chirurgicalement des micro-réseaux destinés à des robots, des capteurs IoT ou des appareils mobiles, où la mémoire vive et la consommation énergétique sont strictement limitées, là où un humain aurait tendance à proposer un modèle trop lourd.
 ---
 ## Annexe
 
@@ -540,6 +601,27 @@ J'ai implémenté cette fonctionnalité dans mon code, incluant des méthodes po
 
 ### Méthodes DynamicNet
 
-DynamicNet permet de passer d'une liste d'éléménts config a un NN pytorch mais possede aussi des méthodes nécessaires: TODO expliquer _reconnect_layers (la méthode la plus importante de tout le projet), le passage graph et autre si nécessaire.
+La classe DynamicNet est le moteur de traduction du framework : elle convertit une liste d'objets de configuration (ex: Conv2dCfg, LinearCfg) en un véritable modèle PyTorch évaluable.
+
+Le défi d'ingénierie majeur de cette conversion est le calcul automatique de la dimensionnalité entre les couches d'extraction de caractéristiques (CNN) et les couches de classification (Dense). Pour automatiser cela, j'ai développé la méthode algorithmique _reconnect_layers :
+
+- Génération d'un tenseur fantôme (Dummy Tensor) : À l'initialisation, la méthode génère un tenseur vide possédant la forme exacte des données d'entrée (ex: 3x32x32 pour une image).
+
+- Propagation simulée : Ce tenseur traverse séquentiellement les couches convolutives générées. PyTorch calcule ainsi naturellement la réduction spatiale appliquée par les convolutions et les poolings.
+
+- Injection dynamique : Lorsque le tenseur rencontre la couche Flatten, la taille exacte du vecteur aplati est extraite algorithmiquement et injectée de force comme paramètre in_features de la première couche linéaire suivante.
+    Cette mécanique garantit qu'aucune architecture générée aléatoirement ne provoquera de crash lié à une incompatibilité matricielle lors de la phase d'évaluation.
 
 ### Méthodes optimiseurs
+
+
+Pour garantir l'équité des benchmarks, toutes les méthodes (GA, ABC, Transformer) héritent d'une classe abstraite commune Optimizer. Cette classe parente gère la logique universelle :
+
+L'évaluation par Proxy (via la fonction evaluate incluant un découpage dynamique Train/Validation et un mécanisme d'Early Stopping).
+
+L'opérateur de mutation topologique (neighbor), capable de modifier les hyperparamètres, d'ajouter ou de retirer des couches en vérifiant dynamiquement la cohérence de l'espace (ex: interdire une convolution après une couche dense).
+
+
+Lors du développement du contrôleur récurrent (RLOptimizer basé sur un LSTM), un crash asynchrone spécifique au processeur graphique a été rencontré : RuntimeError: CUDA error: device-side assert triggered.
+
+Ce type d'erreur est classique lors de l'utilisation de calculs parallèles sur GPU (CUDA). Elle survient généralement lorsqu'un index généré par le modèle sort des limites autorisées d'une couche d'Embedding, ou lors d'une inadéquation inattendue dans le calcul de la fonction de perte multi-objective. Le rapport d'erreur asynchrone de CUDA rendant le débogage complexe (la pile d'exécution ne pointant pas sur la ligne fautive exacte), une solution de repli (Fallback) a été implémentée : l'exécution stricte de cet optimiseur spécifique sur le CPU. Cela souligne la complexité technique inhérente à l'implémentation de méthodes d'Apprentissage par Renforcement sur du matériel d'accélération graphique asynchrone.
