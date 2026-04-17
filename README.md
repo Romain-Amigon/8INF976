@@ -45,6 +45,13 @@ Pour mener à bien cette étude, j'ai décidé de comparer les méthodes suivant
 
 Pour résumer, on formalise un forward dans un réseau de neurone : $f(\theta)(W)(X)=y$, avec $\theta$ l'architecture du réseau, optimisée avec mes méthodes, W les poids, optimisé par entraînement, et X les données d'entrée, y la sortie.
 
+Installation
+---
+
+Le code nécessite pytorch et scikit-learn
+
+Les diagrammes du README ont été faits avec mermaid.
+
 ---
 
 ## 2.Etat de l'art NAS
@@ -66,7 +73,7 @@ Pour résumer, on formalise un forward dans un réseau de neurone : $f(\theta)(W
 * **Limites et améliorations :** La méthode DARTS classique est très instable (phénomène de *collapse* où le réseau finit par ne choisir que des connexions directes "skip-connect" car elles font baisser l'erreur plus vite au début). Cela a été corrigé par des variantes comme **RobustDARTS** (Zela et al., ICLR 2020) ou **DrNAS** (Chen et al., CVPR 2021).
 
 ### 2.4. Zero-Cost Proxies
-* **Concept :** C'est la méthode d'évaluation ultime en termes de vitesse. Au lieu d'entraîner un réseau (même pour une seule époque), on analyse sa structure et le comportement de ses gradients juste après l'initialisation (à $t=0$). On utilise des métriques mathématiques (matrice de Fisher, Jacobienne, corrélation synaptique comme SynFlow) pour estimer si l'architecture a le potentiel d'apprendre.
+* **Concept :** C'est la méthode d'évaluation très rapide. Au lieu d'entraîner un réseau (même pour une seule époque), on analyse sa structure et le comportement de ses gradients juste après l'initialisation (à $t=0$). On utilise des métriques mathématiques (matrice de Fisher, Jacobienne, corrélation synaptique comme SynFlow) pour estimer si l'architecture a le potentiel d'apprendre.
 * **Article fondateur :** *Zero-Cost Proxies for Lightweight NAS* (Abdelfattah et al., ICLR 2021) et *Neural Architecture Search without Training* (Mellor et al., ICML 2021).
 * **Résultats historiques :** L'évaluation d'un réseau passe de quelques heures à **moins de 3 secondes**. Ces métriques parviennent à maintenir une corrélation de Spearman allant jusqu'à **0.8** avec la précision finale réelle des réseaux sur NAS-Bench-201, permettant un filtrage initial massif.
 
@@ -202,7 +209,7 @@ class TransformerOptimizer(Optimizer):
 ```
 
 #### A. Formalisation de l'Apprentissage par Renforcement
-L'espace de recherche est discrétisé sous forme d'un vocabulaire de "jetons" (ex: `conv_3_16`, `pool_2`, `linear_64`, `stop`). Le contrôleur génère une séquence de ces jetons de manière auto-régressive.
+L'espace de recherche est discrétisé sous forme d'un vocabulaire de tokens (ex: `conv_3_16`, `pool_2`, `linear_64`, `stop`). Le contrôleur génère une séquence de ces jetons de manière auto-régressive.
 La mise à jour des poids du contrôleur s'effectue via l'algorithme *Policy Gradient* (REINFORCE). 
 
 **La fonction de récompense multi-objective :**
