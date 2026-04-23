@@ -619,6 +619,8 @@ Le défi d'ingénierie majeur de cette conversion est le calcul automatique de l
 - Injection dynamique : Lorsque le tenseur rencontre la couche Flatten, la taille exacte du vecteur aplati est extraite algorithmiquement et injectée de force comme paramètre in_features de la première couche linéaire suivante.
     Cette mécanique garantit qu'aucune architecture générée aléatoirement ne provoquera de crash lié à une incompatibilité matricielle lors de la phase d'évaluation.
 
+le champ search_space est une idée laissée pour plus tard qui a pour but de laisser l'utilisateur mettre enp place des contraintes dans la recherche (nombre de couches, de paramètres, temps de recherche, ...), cependant c'était complexe et peu utile pour mon utilisation de projet + a été aussi implémenté avec la possibilité de réécrire evaluate.
+
 ### Méthodes optimiseurs
 
 
