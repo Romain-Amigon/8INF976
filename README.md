@@ -5,6 +5,8 @@
 
 [https://github.com/Romain-Amigon/8INF976](https://github.com/Romain-Amigon/8INF976)
 
+code "propre" et commenté sur : https://github.com/Romain-Amigon/nas-torch (pour une lib python)
+
 ## 1.Introduction
 
 Le but de ce cours était de mener un projet sur les méthodes d'optimisation des architectures des réseaux de neurones (Neural Architecture Search - NAS).
