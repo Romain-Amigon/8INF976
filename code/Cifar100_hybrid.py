@@ -12,7 +12,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
 from layer_classes import Conv2dCfg, MaxPool2dCfg, FlattenCfg, LinearCfg
-from optimizer import SAOptimizer
+from optimizer import ABCOptimizer, TransformerOptimizer
 from model import DynamicNet
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -27,6 +27,7 @@ def set_global_seed(seed):
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         
+    # Optimisations Ampere (RTX 30XX)
     torch.backends.cudnn.deterministic = False
     torch.backends.cudnn.benchmark = True
     torch.set_float32_matmul_precision('high')
@@ -42,7 +43,8 @@ def to_gpu_tensors(dataset, indices):
     y = torch.tensor(ys, dtype=torch.long).to(DEVICE)
     return X, y
 
-def evaluate_cifar_proxy(self, genome, train_epochs=10): 
+def evaluate_cifar_proxy(self, genome, train_epochs=10):
+    """Proxy 100% sur GPU, sans DataLoader : itération par indices."""
     self.eval_count += 1 
     try:
         model = DynamicNet(genome, input_shape=(3, 32, 32)).to(DEVICE)
@@ -87,21 +89,25 @@ if __name__ == "__main__":
     print(f"Utilisation du device : {DEVICE}")
     os.makedirs("results", exist_ok=True)
 
+    # transform_eval : SANS augmentation, utilisé pour le proxy et le test final.
+    # Normalisation spécifique à CIFAR-100
     transform_eval = transforms.Compose([
         transforms.ToTensor(), 
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
     ])
     
+    # transform_train : AVEC augmentation, utilisé UNIQUEMENT pour l'entraînement final 100 époques.
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4), 
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(), 
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
     ])
 
-    trainset_eval = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_eval)
-    trainset_aug  = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-    testset       = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_eval)
+    # Utilisation de CIFAR100
+    trainset_eval = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_eval)
+    trainset_aug  = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
+    testset       = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_eval)
     
     test_loader = DataLoader(testset, batch_size=256, shuffle=False, num_workers=0, pin_memory=True)
 
@@ -109,53 +115,69 @@ if __name__ == "__main__":
     all_accuracies, all_results = [], {}
 
     for current_seed in seeds:
-        print(f"\n{'='*50}\nLANCEMENT SA SEUL - SEED: {current_seed}\n{'='*50}")
+        print(f"\n{'='*50}\nRECHERCHE HYBRIDE CIFAR-100 - SEED: {current_seed}\n{'='*50}")
         set_global_seed(current_seed)
         
         indices = np.random.permutation(len(trainset_eval))
         train_proxy_idx = indices[:int(0.4 * len(trainset_eval))]
         val_proxy_idx   = indices[int(0.4 * len(trainset_eval)):int(0.5 * len(trainset_eval))]
         
+        # Préchargement GPU
         print("Préchargement du proxy sur GPU...")
         t_preload = time.time()
         X_train_proxy, y_train_proxy = to_gpu_tensors(trainset_eval, train_proxy_idx)
         X_val_proxy,   y_val_proxy   = to_gpu_tensors(trainset_eval, val_proxy_idx)
         print(f"  Fait en {time.time() - t_preload:.1f}s")
         
+        # DataLoader pour l'entraînement final 100 epochs
         train_loader_final = DataLoader(trainset_aug, batch_size=512, shuffle=True, num_workers=0, pin_memory=True)
+        # Dummy loader pour initialiser les optimiseurs
         dummy_loader = DataLoader(trainset_eval, batch_size=512)
 
+        # Modification : out_features=100 pour CIFAR-100
         initial_arch = [
             Conv2dCfg(in_channels=0, out_channels=16, kernel_size=3, padding=1, activation=nn.ReLU),
             MaxPool2dCfg(kernel_size=2, stride=2, padding=0),
             FlattenCfg(),
-            LinearCfg(in_features=0, out_features=10, activation=None)
+            LinearCfg(in_features=0, out_features=100, activation=None)
         ]
 
-        print("\nDébut de la recherche Recuit Simulé sur proxy CIFAR-10...")
-        start_time_sa = time.time()
+        print("\nDébut Transformer...")
+        start_t = time.time()
+        opt_trans = TransformerOptimizer(layers=initial_arch, max_layers=20, dataset=dummy_loader, entropy_fct="default")
+        opt_trans.X_train, opt_trans.y_train = X_train_proxy, y_train_proxy
+        opt_trans.X_val,   opt_trans.y_val   = X_val_proxy,   y_val_proxy
+        opt_trans.evaluate = types.MethodType(evaluate_cifar_proxy, opt_trans)
         
-        opt_sa = SAOptimizer(layers=initial_arch, dataset=dummy_loader, temp_init=100, cooling_rate=0.99)
-        opt_sa.X_train, opt_sa.y_train = X_train_proxy, y_train_proxy
-        opt_sa.X_val,   opt_sa.y_val   = X_val_proxy,   y_val_proxy
-        opt_sa.evaluate = types.MethodType(evaluate_cifar_proxy, opt_sa)
+        best_arch_trans, _ = opt_trans.run(20)
+        evals_trans = opt_trans.eval_count
+        time_trans = time.time() - start_t
+
+        print("\nDébut ABC...")
+        start_abc = time.time()
+        opt_abc = ABCOptimizer(layers=best_arch_trans, dataset=dummy_loader, pop_size=20, limit=5, patience=15)
+        opt_abc.X_train, opt_abc.y_train = X_train_proxy, y_train_proxy
+        opt_abc.X_val,   opt_abc.y_val   = X_val_proxy,   y_val_proxy
+        opt_abc.evaluate = types.MethodType(evaluate_cifar_proxy, opt_abc)
         
-        best_sol_final, optim_stats_sa = opt_sa.run(800) 
-        
-        total_search_time = time.time() - start_time_sa
-        evals_sa = opt_sa.eval_count
-        print(f"Bilan recherche : {evals_sa} évaluations proxy réalisées.")
+        best_sol_final, _ = opt_abc.run(15)
+        evals_abc = opt_abc.eval_count
+        time_abc = time.time() - start_abc
+
+        total_evals = evals_trans + evals_abc
+        total_time = time_trans + time_abc
+        print(f"Bilan recherche : {total_evals} évaluations proxy réalisées.")
 
         # =========================================================
         # NETTOYAGE VRAM AVANT L'ENTRAÎNEMENT FINAL
         # =========================================================
         print("Libération de la VRAM Proxy...")
         del X_train_proxy, y_train_proxy, X_val_proxy, y_val_proxy
-        del opt_sa
+        del opt_trans, opt_abc
         gc.collect()
         torch.cuda.empty_cache()
 
-        print("\nEntraînement Final (100 Epochs)...")
+        print("\nEntraînement Final (100 epochs)...")
         final_model = DynamicNet(best_sol_final, input_shape=(3, 32, 32)).to(DEVICE)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(final_model.parameters(), lr=0.001)
@@ -179,14 +201,22 @@ if __name__ == "__main__":
                 _, preds = outputs.max(1)
                 total += targets.size(0)
                 correct += preds.eq(targets.to(DEVICE)).sum().item()
-                
+        
         final_accuracy = correct / total
         n_params = final_model.count_parameters()
-        print(f"--> Accuracy finale Seed {current_seed} : {final_accuracy*100:.2f}% | {n_params:,} paramètres")
+        print(f"--> Accuracy Seed {current_seed} : {final_accuracy*100:.2f}% | {n_params:,} paramètres")
         all_accuracies.append(final_accuracy)
 
-        with open(f"results/academic_results_SA_100_{current_seed}.json", "w") as f:
-            json.dump({"accuracy": final_accuracy, "evals": evals_sa, "time": total_search_time, "n_parameters": n_params}, f)
+        # Sauvegarde avec mention cifar100
+        with open(f"results/academic_results_hybride_cifar100_{current_seed}.json", "w") as f:
+            json.dump({
+                "accuracy": final_accuracy, 
+                "evals": total_evals, 
+                "time": total_time,
+                "n_parameters": n_params
+            }, f)
+            
+        torch.save(final_model.state_dict(), f"results/best_model_hybride_cifar100_seed_{current_seed}.pth")
 
         # =========================================================
         # NETTOYAGE VRAM FIN DE SEED
@@ -195,4 +225,4 @@ if __name__ == "__main__":
         gc.collect()
         torch.cuda.empty_cache()
 
-    print(f"\nMoyenne: {np.mean(all_accuracies)*100:.2f}% ± {np.std(all_accuracies, ddof=1)*100:.2f}%")
+    print(f"\nMoyenne CIFAR-100: {np.mean(all_accuracies)*100:.2f}% ± {np.std(all_accuracies, ddof=1)*100:.2f}%")

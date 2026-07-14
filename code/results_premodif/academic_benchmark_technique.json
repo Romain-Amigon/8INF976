@@ -1,0 +1,114 @@
+{
+    "runs": 5,
+    "iterations": 40,
+    "results": [
+        {
+            "task": "california_housing",
+            "algo": "Simulated Annealing",
+            "score_str": "-0.37 \u00b1 0.03",
+            "mean_score": -0.37239030599594114,
+            "std_score": 0.03346173589886342,
+            "gain": 0.07588726878166199,
+            "iter": 5.6,
+            "depth": 1.0,
+            "time": 33.21608934402466,
+            "evals": 41.0
+        },
+        {
+            "task": "california_housing",
+            "algo": "ABC Algorithm",
+            "score_str": "-0.31 \u00b1 0.01",
+            "mean_score": -0.313279515504837,
+            "std_score": 0.009348350922092533,
+            "gain": 0.14396323561668395,
+            "iter": 18.6,
+            "depth": 2.6,
+            "time": 1534.035474872589,
+            "evals": 1735.6
+        },
+        {
+            "task": "california_housing",
+            "algo": "Transformer",
+            "score_str": "-0.34 \u00b1 0.04",
+            "mean_score": -0.33706907629966737,
+            "std_score": 0.03667158480205515,
+            "gain": 0.11178966760635375,
+            "iter": 12.6,
+            "depth": 9.6,
+            "time": 1382.3897252082825,
+            "evals": 641.0
+        },
+        {
+            "task": "breast_cancer",
+            "algo": "Simulated Annealing",
+            "score_str": "97.80 \u00b1 0.78",
+            "mean_score": 97.8021978021978,
+            "std_score": 0.7770404188863181,
+            "gain": 5.714285714285711,
+            "iter": 22.0,
+            "depth": 0.2,
+            "time": 1.176219367980957,
+            "evals": 41.0
+        },
+        {
+            "task": "breast_cancer",
+            "algo": "ABC Algorithm",
+            "score_str": "98.90 \u00b1 0.78",
+            "mean_score": 98.9010989010989,
+            "std_score": 0.7770404188863181,
+            "gain": 5.4945054945054945,
+            "iter": 4.4,
+            "depth": 1.0,
+            "time": 46.732597780227664,
+            "evals": 1788.0
+        },
+        {
+            "task": "breast_cancer",
+            "algo": "Transformer",
+            "score_str": "99.12 \u00b1 0.92",
+            "mean_score": 99.12087912087912,
+            "std_score": 0.9194066225649199,
+            "gain": 7.692307692307691,
+            "iter": 9.4,
+            "depth": 5.4,
+            "time": 84.80514316558838,
+            "evals": 641.0
+        },
+        {
+            "task": "fashion_mnist_simple",
+            "algo": "Simulated Annealing",
+            "score_str": "83.95 \u00b1 0.74",
+            "mean_score": 83.95,
+            "std_score": 0.7373940601876312,
+            "gain": 2.25,
+            "iter": 9.8,
+            "depth": 0.2,
+            "time": 7.310426902770996,
+            "evals": 41.0
+        },
+        {
+            "task": "fashion_mnist_simple",
+            "algo": "ABC Algorithm",
+            "score_str": "87.25 \u00b1 1.40",
+            "mean_score": 87.25,
+            "std_score": 1.403121520040228,
+            "gain": 3.7,
+            "iter": 23.0,
+            "depth": 1.0,
+            "time": 278.6766697883606,
+            "evals": 1777.2
+        },
+        {
+            "task": "fashion_mnist_simple",
+            "algo": "Transformer",
+            "score_str": "85.55 \u00b1 0.89",
+            "mean_score": 85.55,
+            "std_score": 0.8909264840602731,
+            "gain": 2.75,
+            "iter": 19.4,
+            "depth": 1.6,
+            "time": 161.82862796783448,
+            "evals": 641.0
+        }
+    ]
+}

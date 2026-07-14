@@ -16,6 +16,7 @@ class Optimizer(ABC):
         self.dataset = dataset
         self.best_score = -float('inf')
         self.best_arch = None
+        self.eval_count = 0
         
         base_dataset = self.dataset.dataset if hasattr(self.dataset, 'dataset') else self.dataset
         _, sample_target = base_dataset[0]
@@ -134,14 +135,13 @@ class Optimizer(ABC):
         mutation_type = random.choice(options)
 
         def is_linear_context_check(target_list, idx):
-            if idx == 0: 
-                if len(target_list) > 0 and isinstance(target_list[0], (LinearCfg, FlattenCfg)):
+            # CORRECTION : Chercher en arrière la dernière couche structurelle, ignorer Dropout/BN
+            for i in range(idx - 1, -1, -1):
+                layer = target_list[i]
+                if isinstance(layer, (LinearCfg, FlattenCfg, GlobalAvgPoolCfg)):
                     return True
-                return False
-            
-            prev_layer = target_list[idx - 1]
-            if isinstance(prev_layer, (LinearCfg, FlattenCfg, GlobalAvgPoolCfg)):
-                return True
+                if isinstance(layer, (Conv2dCfg, MaxPool2dCfg, ResBlockCfg)):
+                    return False
             return False
 
         def get_mutable_layers(current_list, is_root=True):
@@ -300,7 +300,8 @@ class SAOptimizer(Optimizer):
             "initial_score": initial_score,
             "best_score": self.best_score,
             "best_iter": best_iter,
-            "gain": self.best_score - initial_score
+            "gain": self.best_score - initial_score,
+            "n_evaluations": self.eval_count
         }
         return self.best_arch, stats
 
@@ -482,7 +483,8 @@ class ABCOptimizer(Optimizer):
             "initial_score": initial_score,
             "best_score": self.best_score,
             "best_iter": best_gen,
-            "gain": self.best_score - initial_score
+            "gain": self.best_score - initial_score,
+            "n_evaluations": self.eval_count
         }
         return self.best_arch, stats
 
@@ -513,6 +515,7 @@ class RLOptimizer(Optimizer):
         # 1. Ajout du jeton "stop"
         self.vocab = [
             "conv_3_16", "conv_3_32", "conv_5_16", 
+            "resblock_16", "resblock_32",
             "pool_2", 
             "linear_32", "linear_64", 
             "dropout_0.2", "dropout_0.5",
@@ -593,7 +596,7 @@ class RLOptimizer(Optimizer):
 
         if not any(isinstance(layer, LinearCfg) for layer in generated_cfg):
             generated_cfg.append(FlattenCfg())
-            generated_cfg.append(LinearCfg(in_features=0, out_features=2, activation=None))
+        generated_cfg.append(LinearCfg(in_features=0, out_features=self.out_features, activation=None))
 
         return generated_cfg, torch.cat(log_probs).sum(), entropy
 
@@ -703,7 +706,7 @@ class ControllerTransformer(nn.Module):
         return logits
 
 class TransformerOptimizer(Optimizer):
-    def __init__(self, layers=None, search_space=None, dataset=None, max_layers=8, entropy_weight=0.05, entropy_fct=None, d_model=64, nhead=4, num_layers=2, lr=0.01, **kwargs):
+    def __init__(self, layers=None, search_space=None, dataset=None, max_layers=8, entropy_weight=0.05, entropy_fct=None, d_model=64, nhead=4, num_layers=2, lr=0.01,lenght_penalty=False, **kwargs):
         super().__init__(layers, search_space, dataset)
         self.max_layers = max_layers
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -722,7 +725,9 @@ class TransformerOptimizer(Optimizer):
         self.controller = ControllerTransformer(self.num_tokens, d_model=d_model, nhead=nhead, num_layers=num_layers, max_len=max_layers+5).to(self.device)
         self.ctrl_optimizer = optim.Adam(self.controller.parameters(), lr=lr)
         self.baseline = 0.0
-        self.entropy_weight = entropy_weight 
+        self.entropy_weight = entropy_weight
+        
+        self.lenght_penalty=lenght_penalty
         
         if entropy_fct is True or entropy_fct == "default":
             self.entropy_fct = self.variable_entropy
@@ -790,9 +795,8 @@ class TransformerOptimizer(Optimizer):
             
             next_token_logits = logits[-1, 0, :]
             
-            probs = F.softmax(next_token_logits, dim=-1)
-            m = Categorical(probs)
-            
+            next_token_logits = torch.clamp(next_token_logits, -20, 20)
+            m = Categorical(logits=next_token_logits) 
             action = m.sample()
             log_prob = m.log_prob(action)
             
@@ -848,9 +852,10 @@ class TransformerOptimizer(Optimizer):
                 
                 if raw_score == -float('inf'):
                     reward = crash_score
-                else:
+                elif self.lenght_penalty:
                     length_penalty = 0.5 * len(arch_cfg) if not regression else 0.0
                     reward = raw_score - length_penalty
+                else :    reward = raw_score 
                 
                 advantage = reward - self.baseline
                 
@@ -875,6 +880,7 @@ class TransformerOptimizer(Optimizer):
             
             batch_loss = batch_loss / batch_size
             batch_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.controller.parameters(), max_norm=1.0)
             self.ctrl_optimizer.step()
 
         stats = {

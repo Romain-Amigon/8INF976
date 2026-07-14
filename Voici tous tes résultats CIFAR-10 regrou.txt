@@ -1,0 +1,31 @@
+Voici tous tes résultats CIFAR-10 regroupés, seed par seed, à partir de tes logs réels.
+
+
+
+| Optimizer | Seed | Accuracy | Temps de recherche | Paramètres |
+|---|---|---|---|---|
+| Hybrid (malus + early-exit) | 42 | 81.47% | ~77 min | 50 650 |
+| Hybrid (malus + early-exit) | 43 | 83.82% | ~84 min | 77 002 |
+| Hybrid (malus + early-exit) | 44 | 84.88% | ~80 min | 165 209 |
+| **Moyenne** | — | **83.39% ± 1.75%** | **~80 min** | **~97 620** |
+| Hybrid (malus + full budget) | 42 | 83.28% | ~95 min | 176 350 |
+| Hybrid (malus + full budget) | 43 | 88.17% | ~253 min | 229 578 |
+| Hybrid (malus + full budget) | 44 | 83.09% | ~228 min | 117 610 |
+| **Moyenne** | — | **84.85% ± 2.88%** | **~192 min** | **~174 513** |
+| Hybrid (no malus + full budget) | 42 | 87.83% | ~252 min | 281 522 |
+| Hybrid (no malus + full budget) | 43 | 87.81% | ~279 min | 189 963 |
+| Hybrid (no malus + full budget) | 44 | 84.81% | ~167 min | 215 402 |
+| **Moyenne** | — | **86.82% ± 1.74%** | **~233 min** | **~228 962** |
+| Simulated Annealing | 42 | 85.82% | ~152 min | 288 047 |
+| Simulated Annealing | 43 | 88.98% | ~91 min | 359 629 |
+| Simulated Annealing | 44 | 86.83% | ~83 min | 236 607 |
+| **Moyenne** | — | **87.21% ± 1.61%** | **~109 min** | **~294 761** |
+| ABC only | 42 | 77.70% | ~23 min | 184 040 |
+| ABC only | 43 | 76.27% | ~16 min | 421 335 |
+| ABC only | 44 | 74.61% | ~7 min | 138 413 |
+| **Moyenne** | — | **76.19% ± 1.55%** | **~15 min** | **~247 929** |
+| Random Search | 42 | 84.81% | ~24 min | 68 010 |
+| Random Search | 43 | 82.18% | ~26 min | 171 466 |
+| Random Search | 44 | 83.53% | ~38 min | 161 226 |
+| **Moyenne** | — | **83.51% ± 1.32%** | **~29 min** | **~133 567** |
+

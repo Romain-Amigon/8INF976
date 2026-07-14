@@ -1,0 +1,110 @@
+==================================================
+RECHERCHE HYBRIDE CIFAR-100 - SEED: 42
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.9s
+
+Début Transformer...
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score 23.26 (Depth: 7)
+Transformer Iter 1: New Best Score 23.36 (Depth: 4)
+Transformer Iter 2: New Best Score 24.92 (Depth: 7)
+Transformer Iter 2: New Best Score 25.80 (Depth: 5)
+Transformer Iter 6: New Best Score 26.36 (Depth: 4)
+
+Début ABC...
+ABC Iter 0: Best Score 28.28
+ABC Iter 1: Best Score 28.50
+ABC Iter 2: Best Score 28.50
+ABC Iter 3: Best Score 28.80
+ABC Iter 4: Best Score 28.80
+ABC Iter 5: Best Score 29.26
+ABC Iter 6: Best Score 29.26
+ABC Iter 7: Best Score 30.16
+ABC Iter 8: Best Score 30.16
+ABC Iter 9: Best Score 30.38
+ABC Iter 10: Best Score 30.70
+ABC Iter 11: Best Score 34.38
+ABC Iter 12: Best Score 35.06
+ABC Iter 13: Best Score 36.36
+ABC Iter 14: Best Score 36.36
+Bilan recherche : 992 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy Seed 42 : 57.58% | 449,333 paramètres
+
+==================================================
+RECHERCHE HYBRIDE CIFAR-100 - SEED: 43
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.5s
+
+Début Transformer...
+Transformer Iter 0: New Best Score 17.90 (Depth: 5)
+Transformer Iter 0: New Best Score 23.08 (Depth: 3)
+Transformer Iter 0: New Best Score 24.40 (Depth: 7)
+Transformer Iter 1: New Best Score 28.64 (Depth: 12)
+
+Début ABC...
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\init.py:511: UserWarning: Initializing zero-element tensors is a no-op
+  warnings.warn("Initializing zero-element tensors is a no-op")
+ABC Iter 0: Best Score 29.52
+ABC Iter 1: Best Score 29.52
+ABC Iter 2: Best Score 29.52
+ABC Iter 3: Best Score 30.30
+ABC Iter 4: Best Score 30.30
+ABC Iter 5: Best Score 30.30
+ABC Iter 6: Best Score 33.82
+ABC Iter 7: Best Score 33.90
+ABC Iter 8: Best Score 34.52
+ABC Iter 9: Best Score 34.52
+ABC Iter 10: Best Score 34.52
+ABC Iter 11: Best Score 34.52
+ABC Iter 12: Best Score 34.52
+ABC Iter 13: Best Score 34.52
+ABC Iter 14: Best Score 34.52
+Bilan recherche : 986 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy Seed 43 : 52.71% | 232,220 paramètres
+
+==================================================
+RECHERCHE HYBRIDE CIFAR-100 - SEED: 44
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.5s
+
+Début Transformer...
+Transformer Iter 0: New Best Score 11.70 (Depth: 14)
+Transformer Iter 0: New Best Score 14.42 (Depth: 4)
+Transformer Iter 0: New Best Score 22.80 (Depth: 9)
+Transformer Iter 1: New Best Score 23.52 (Depth: 6)
+Transformer Iter 1: New Best Score 27.72 (Depth: 5)
+Transformer Iter 18: New Best Score 27.82 (Depth: 11)
+
+Début ABC...
+ABC Iter 0: Best Score 29.48
+ABC Iter 1: Best Score 30.50
+ABC Iter 2: Best Score 30.50
+ABC Iter 3: Best Score 30.50
+ABC Iter 4: Best Score 30.50
+ABC Iter 5: Best Score 31.12
+ABC Iter 6: Best Score 31.12
+ABC Iter 7: Best Score 31.12
+ABC Iter 8: Best Score 31.12
+ABC Iter 9: Best Score 31.12
+ABC Iter 10: Best Score 31.12
+ABC Iter 11: Best Score 31.12
+ABC Iter 12: Best Score 31.12
+ABC Iter 13: Best Score 31.12
+ABC Iter 14: Best Score 31.12
+Bilan recherche : 995 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy Seed 44 : 46.79% | 3,103,278 paramètres
+
+Moyenne CIFAR-100: 52.36% ± 5.40%

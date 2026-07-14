@@ -1,0 +1,1194 @@
+==================================================
+STARTING ALL EXPERIMENTS AUTOMATICALLY
+==================================================
+
+========================================
+RUNNING: C:/Users/ramigon/Downloads/8INF976/code/Cifar_hybrid.py
+========================================
+
+Utilisation du device : cuda
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+
+==================================================
+RECHERCHE HYBRIDE - SEED: 42
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 4.2s
+
+Début Transformer...
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score 55.66 (Depth: 5)
+Transformer Iter 0: New Best Score 56.60 (Depth: 5)
+Transformer Iter 0: New Best Score 61.04 (Depth: 12)
+Transformer Iter 1: New Best Score 63.56 (Depth: 10)
+Transformer Iter 4: New Best Score 65.24 (Depth: 8)
+
+Début ABC...
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\init.py:511: UserWarning: Initializing zero-element tensors is a no-op
+  warnings.warn("Initializing zero-element tensors is a no-op")
+ABC Iter 0: Best Score 67.60
+ABC Iter 1: Best Score 67.60
+ABC Iter 2: Best Score 68.28
+ABC Iter 3: Best Score 68.28
+ABC Iter 4: Best Score 68.28
+ABC Iter 5: Best Score 68.28
+ABC Iter 6: Best Score 68.28
+ABC Iter 7: Best Score 68.28
+Early stopping déclenché à l'itération 7 : Aucun gain depuis 5 itérations.
+Bilan recherche : 689 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy Seed 42 : 81.47% | 50,650 paramètres
+
+==================================================
+RECHERCHE HYBRIDE - SEED: 43
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.2s
+
+Début Transformer...
+Transformer Iter 0: New Best Score 46.50 (Depth: 5)
+Transformer Iter 0: New Best Score 47.80 (Depth: 13)
+Transformer Iter 0: New Best Score 54.30 (Depth: 7)
+Transformer Iter 0: New Best Score 60.50 (Depth: 6)
+Transformer Iter 0: New Best Score 61.52 (Depth: 8)
+Transformer Iter 5: New Best Score 67.36 (Depth: 12)
+
+Début ABC...
+ABC Iter 0: Best Score 68.50
+ABC Iter 1: Best Score 70.42
+ABC Iter 2: Best Score 70.56
+ABC Iter 3: Best Score 70.56
+ABC Iter 4: Best Score 70.56
+ABC Iter 5: Best Score 70.56
+ABC Iter 6: Best Score 70.56
+ABC Iter 7: Best Score 70.56
+Early stopping déclenché à l'itération 7 : Aucun gain depuis 5 itérations.
+Bilan recherche : 685 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy Seed 43 : 83.82% | 77,002 paramètres
+
+==================================================
+RECHERCHE HYBRIDE - SEED: 44
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.0s
+
+Début Transformer...
+Transformer Iter 0: New Best Score 36.48 (Depth: 14)
+Transformer Iter 0: New Best Score 38.66 (Depth: 15)
+Transformer Iter 0: New Best Score 46.54 (Depth: 12)
+Transformer Iter 0: New Best Score 57.62 (Depth: 8)
+Transformer Iter 0: New Best Score 61.60 (Depth: 6)
+Transformer Iter 1: New Best Score 64.50 (Depth: 7)
+
+Début ABC...
+ABC Iter 0: Best Score 68.02
+ABC Iter 1: Best Score 68.02
+ABC Iter 2: Best Score 68.02
+ABC Iter 3: Best Score 68.02
+ABC Iter 4: Best Score 68.02
+ABC Iter 5: Best Score 68.18
+ABC Iter 6: Best Score 68.26
+ABC Iter 7: Best Score 68.26
+ABC Iter 8: Best Score 68.66
+ABC Iter 9: Best Score 68.66
+ABC Iter 10: Best Score 68.66
+ABC Iter 11: Best Score 68.66
+ABC Iter 12: Best Score 68.66
+ABC Iter 13: Best Score 68.66
+Early stopping déclenché à l'itération 13 : Aucun gain depuis 5 itérations.
+Bilan recherche : 946 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy Seed 44 : 84.88% | 165,209 paramètres
+
+Moyenne: 83.39% ± 1.75%
+
+[SUCCESS] C:/Users/ramigon/Downloads/8INF976/code/Cifar_hybrid.py finished in 279.67 minutes.
+
+========================================
+RUNNING: C:/Users/ramigon/Downloads/8INF976/code/Cifar _SA.py
+========================================
+
+Utilisation du device : cuda
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+
+==================================================
+LANCEMENT SA SEUL - SEED: 42
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.1s
+
+Début de la recherche Recuit Simulé sur proxy CIFAR-10...
+iter 1: New Best! Score 56.72
+iter 2: New Best! Score 58.08
+iter 10: New Best! Score 58.32
+iter 14: New Best! Score 60.32
+iter 31: New Best! Score 60.90
+iter 32: New Best! Score 61.26
+iter 34: New Best! Score 62.34
+iter 63: New Best! Score 62.44
+iter 247: New Best! Score 64.20
+iter 248: New Best! Score 65.36
+iter 249: New Best! Score 66.92
+iter 433: New Best! Score 67.82
+iter 438: New Best! Score 68.76
+iter 451: New Best! Score 70.02
+iter 522: New Best! Score 71.22
+iter 532: New Best! Score 71.50
+iter 536: New Best! Score 71.72
+iter 537: New Best! Score 73.36
+iter 596: New Best! Score 73.74
+iter 600: New Best! Score 74.04
+Bilan recherche : 801 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 Epochs)...
+--> Accuracy finale Seed 42 : 85.82% | 288,047 paramètres
+
+==================================================
+LANCEMENT SA SEUL - SEED: 43
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.0s
+
+Début de la recherche Recuit Simulé sur proxy CIFAR-10...
+iter 45: New Best! Score 56.74
+iter 50: New Best! Score 59.28
+iter 51: New Best! Score 59.38
+iter 55: New Best! Score 62.16
+iter 56: New Best! Score 63.94
+iter 421: New Best! Score 68.74
+iter 432: New Best! Score 70.70
+iter 433: New Best! Score 72.20
+iter 480: New Best! Score 72.34
+iter 487: New Best! Score 72.50
+iter 489: New Best! Score 73.86
+iter 512: New Best! Score 74.82
+iter 523: New Best! Score 75.34
+iter 542: New Best! Score 75.46
+iter 547: New Best! Score 75.58
+iter 555: New Best! Score 75.62
+Bilan recherche : 801 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 Epochs)...
+--> Accuracy finale Seed 43 : 88.98% | 359,629 paramètres
+
+==================================================
+LANCEMENT SA SEUL - SEED: 44
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.0s
+
+Début de la recherche Recuit Simulé sur proxy CIFAR-10...
+iter 0: New Best! Score 56.12
+iter 5: New Best! Score 58.92
+iter 7: New Best! Score 59.08
+iter 16: New Best! Score 60.10
+iter 60: New Best! Score 70.28
+iter 525: New Best! Score 71.80
+iter 529: New Best! Score 72.12
+iter 577: New Best! Score 72.16
+iter 584: New Best! Score 72.52
+iter 626: New Best! Score 72.84
+iter 642: New Best! Score 73.22
+iter 646: New Best! Score 73.28
+iter 660: New Best! Score 73.36
+iter 674: New Best! Score 73.88
+iter 693: New Best! Score 74.34
+iter 781: New Best! Score 74.52
+Bilan recherche : 801 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 Epochs)...
+--> Accuracy finale Seed 44 : 86.83% | 236,607 paramètres
+
+Moyenne: 87.21% ± 1.61%
+
+[SUCCESS] C:/Users/ramigon/Downloads/8INF976/code/Cifar _SA.py finished in 362.01 minutes.
+
+========================================
+RUNNING: C:/Users/ramigon/Downloads/8INF976/code/Cifar _abc.py
+========================================
+
+Utilisation du device : cuda
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+
+==================================================
+LANCEMENT ABC SEUL - SEED: 42
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.3s
+
+Début de la recherche ABC sur proxy CIFAR-10...
+ABC Iter 0: Best Score 60.94
+ABC Iter 1: Best Score 62.80
+ABC Iter 2: Best Score 64.88
+ABC Iter 3: Best Score 64.88
+ABC Iter 4: Best Score 64.88
+ABC Iter 5: Best Score 64.88
+ABC Iter 6: Best Score 64.88
+ABC Iter 7: Best Score 64.88
+Early stopping déclenché à l'itération 7 : Aucun gain depuis 5 itérations.
+Bilan recherche : 357 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy finale Seed 42 : 77.70% | 184,040 paramètres
+
+==================================================
+LANCEMENT ABC SEUL - SEED: 43
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.0s
+
+Début de la recherche ABC sur proxy CIFAR-10...
+ABC Iter 0: Best Score 60.08
+ABC Iter 1: Best Score 60.08
+ABC Iter 2: Best Score 61.00
+ABC Iter 3: Best Score 62.34
+ABC Iter 4: Best Score 62.94
+ABC Iter 5: Best Score 67.00
+ABC Iter 6: Best Score 67.00
+ABC Iter 7: Best Score 67.48
+ABC Iter 8: Best Score 67.48
+ABC Iter 9: Best Score 67.48
+ABC Iter 10: Best Score 67.48
+ABC Iter 11: Best Score 67.48
+ABC Iter 12: Best Score 67.48
+Early stopping déclenché à l'itération 12 : Aucun gain depuis 5 itérations.
+Bilan recherche : 573 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy finale Seed 43 : 76.27% | 421,335 paramètres
+
+==================================================
+LANCEMENT ABC SEUL - SEED: 44
+==================================================
+Préchargement du proxy sur GPU...
+  Fait en 2.0s
+
+Début de la recherche ABC sur proxy CIFAR-10...
+ABC Iter 0: Best Score 62.84
+ABC Iter 1: Best Score 63.68
+ABC Iter 2: Best Score 63.68
+ABC Iter 3: Best Score 63.68
+ABC Iter 4: Best Score 63.68
+ABC Iter 5: Best Score 63.68
+ABC Iter 6: Best Score 63.68
+Early stopping déclenché à l'itération 6 : Aucun gain depuis 5 itérations.
+Bilan recherche : 315 évaluations proxy réalisées.
+Libération de la VRAM Proxy...
+
+Entraînement Final (100 epochs)...
+--> Accuracy finale Seed 44 : 74.61% | 138,413 paramètres
+
+Moyenne: 76.19% ± 1.55%
+
+[SUCCESS] C:/Users/ramigon/Downloads/8INF976/code/Cifar _abc.py finished in 70.87 minutes.
+
+========================================
+RUNNING: C:/Users/ramigon/Downloads/8INF976/code/benchmark_technique.py
+========================================
+
+
+==================================================================================================================================
+REAL DATASETS BENCHMARK (Runs: 5 | Iterations: 40) | DEVICE: cuda
+==================================================================================================================================
+
+>>> TASK: CALIFORNIA_HOUSING
+  > Running Simulated Annealing...iter 2: New Best! Score -0.45
+iter 4: New Best! Score -0.44
+iter 7: New Best! Score -0.43
+iter 9: New Best! Score -0.41
+iter 0: New Best! Score -0.40
+iter 3: New Best! Score -0.39
+iter 0: New Best! Score -0.43
+iter 1: New Best! Score -0.42
+iter 2: New Best! Score -0.38
+iter 3: New Best! Score -0.33
+iter 0: New Best! Score -0.44
+iter 3: New Best! Score -0.44
+iter 4: New Best! Score -0.44
+iter 5: New Best! Score -0.44
+iter 6: New Best! Score -0.40
+iter 8: New Best! Score -0.39
+iter 9: New Best! Score -0.38
+iter 0: New Best! Score -0.41
+iter 2: New Best! Score -0.41
+iter 4: New Best! Score -0.34
+ Done in 166.1s total.
+  > Running ABC Algorithm...ABC Iter 0: Best Score -0.37
+ABC Iter 1: Best Score -0.35
+ABC Iter 2: Best Score -0.35
+ABC Iter 3: Best Score -0.35
+ABC Iter 4: Best Score -0.35
+ABC Iter 5: Best Score -0.35
+ABC Iter 6: Best Score -0.33
+ABC Iter 7: Best Score -0.33
+ABC Iter 8: Best Score -0.33
+ABC Iter 9: Best Score -0.33
+ABC Iter 10: Best Score -0.31
+ABC Iter 11: Best Score -0.31
+ABC Iter 12: Best Score -0.31
+ABC Iter 13: Best Score -0.31
+ABC Iter 14: Best Score -0.31
+ABC Iter 15: Best Score -0.31
+ABC Iter 16: Best Score -0.31
+ABC Iter 17: Best Score -0.31
+ABC Iter 18: Best Score -0.31
+ABC Iter 19: Best Score -0.31
+ABC Iter 20: Best Score -0.31
+ABC Iter 21: Best Score -0.31
+ABC Iter 22: Best Score -0.31
+ABC Iter 23: Best Score -0.31
+ABC Iter 24: Best Score -0.31
+ABC Iter 25: Best Score -0.31
+ABC Iter 26: Best Score -0.31
+ABC Iter 27: Best Score -0.31
+ABC Iter 28: Best Score -0.31
+ABC Iter 29: Best Score -0.31
+ABC Iter 30: Best Score -0.31
+ABC Iter 31: Best Score -0.31
+ABC Iter 32: Best Score -0.31
+ABC Iter 33: Best Score -0.30
+ABC Iter 34: Best Score -0.30
+ABC Iter 35: Best Score -0.30
+ABC Iter 36: Best Score -0.30
+ABC Iter 37: Best Score -0.30
+ABC Iter 38: Best Score -0.30
+ABC Iter 39: Best Score -0.30
+ABC Iter 0: Best Score -0.35
+ABC Iter 1: Best Score -0.35
+ABC Iter 2: Best Score -0.35
+ABC Iter 3: Best Score -0.35
+ABC Iter 4: Best Score -0.35
+ABC Iter 5: Best Score -0.35
+ABC Iter 6: Best Score -0.35
+ABC Iter 7: Best Score -0.35
+ABC Iter 8: Best Score -0.34
+ABC Iter 9: Best Score -0.34
+ABC Iter 10: Best Score -0.34
+ABC Iter 11: Best Score -0.34
+ABC Iter 12: Best Score -0.32
+ABC Iter 13: Best Score -0.32
+ABC Iter 14: Best Score -0.32
+ABC Iter 15: Best Score -0.32
+ABC Iter 16: Best Score -0.32
+ABC Iter 17: Best Score -0.32
+ABC Iter 18: Best Score -0.32
+ABC Iter 19: Best Score -0.32
+ABC Iter 20: Best Score -0.32
+ABC Iter 21: Best Score -0.32
+ABC Iter 22: Best Score -0.32
+ABC Iter 23: Best Score -0.32
+ABC Iter 24: Best Score -0.32
+ABC Iter 25: Best Score -0.32
+ABC Iter 26: Best Score -0.32
+ABC Iter 27: Best Score -0.32
+ABC Iter 28: Best Score -0.32
+ABC Iter 29: Best Score -0.32
+ABC Iter 30: Best Score -0.32
+ABC Iter 31: Best Score -0.32
+ABC Iter 32: Best Score -0.32
+ABC Iter 33: Best Score -0.32
+ABC Iter 34: Best Score -0.32
+ABC Iter 35: Best Score -0.32
+ABC Iter 36: Best Score -0.32
+ABC Iter 37: Best Score -0.32
+ABC Iter 38: Best Score -0.32
+ABC Iter 39: Best Score -0.32
+ABC Iter 0: Best Score -0.38
+ABC Iter 1: Best Score -0.37
+ABC Iter 2: Best Score -0.35
+ABC Iter 3: Best Score -0.35
+ABC Iter 4: Best Score -0.34
+ABC Iter 5: Best Score -0.34
+ABC Iter 6: Best Score -0.34
+ABC Iter 7: Best Score -0.34
+ABC Iter 8: Best Score -0.34
+ABC Iter 9: Best Score -0.34
+ABC Iter 10: Best Score -0.34
+ABC Iter 11: Best Score -0.34
+ABC Iter 12: Best Score -0.34
+ABC Iter 13: Best Score -0.34
+ABC Iter 14: Best Score -0.34
+ABC Iter 15: Best Score -0.33
+ABC Iter 16: Best Score -0.33
+ABC Iter 17: Best Score -0.33
+ABC Iter 18: Best Score -0.33
+ABC Iter 19: Best Score -0.33
+ABC Iter 20: Best Score -0.33
+ABC Iter 21: Best Score -0.33
+ABC Iter 22: Best Score -0.33
+ABC Iter 23: Best Score -0.33
+ABC Iter 24: Best Score -0.33
+ABC Iter 25: Best Score -0.33
+ABC Iter 26: Best Score -0.33
+ABC Iter 27: Best Score -0.33
+ABC Iter 28: Best Score -0.33
+ABC Iter 29: Best Score -0.33
+ABC Iter 30: Best Score -0.33
+ABC Iter 31: Best Score -0.33
+ABC Iter 32: Best Score -0.33
+ABC Iter 33: Best Score -0.33
+ABC Iter 34: Best Score -0.33
+ABC Iter 35: Best Score -0.33
+ABC Iter 36: Best Score -0.33
+ABC Iter 37: Best Score -0.33
+ABC Iter 38: Best Score -0.33
+ABC Iter 39: Best Score -0.33
+ABC Iter 0: Best Score -0.42
+ABC Iter 1: Best Score -0.37
+ABC Iter 2: Best Score -0.35
+ABC Iter 3: Best Score -0.34
+ABC Iter 4: Best Score -0.34
+ABC Iter 5: Best Score -0.34
+ABC Iter 6: Best Score -0.34
+ABC Iter 7: Best Score -0.33
+ABC Iter 8: Best Score -0.33
+ABC Iter 9: Best Score -0.33
+ABC Iter 10: Best Score -0.32
+ABC Iter 11: Best Score -0.32
+ABC Iter 12: Best Score -0.32
+ABC Iter 13: Best Score -0.32
+ABC Iter 14: Best Score -0.32
+ABC Iter 15: Best Score -0.32
+ABC Iter 16: Best Score -0.31
+ABC Iter 17: Best Score -0.31
+ABC Iter 18: Best Score -0.31
+ABC Iter 19: Best Score -0.31
+ABC Iter 20: Best Score -0.31
+ABC Iter 21: Best Score -0.31
+ABC Iter 22: Best Score -0.31
+ABC Iter 23: Best Score -0.31
+ABC Iter 24: Best Score -0.31
+ABC Iter 25: Best Score -0.31
+ABC Iter 26: Best Score -0.31
+ABC Iter 27: Best Score -0.31
+ABC Iter 28: Best Score -0.31
+ABC Iter 29: Best Score -0.31
+ABC Iter 30: Best Score -0.31
+ABC Iter 31: Best Score -0.31
+ABC Iter 32: Best Score -0.31
+ABC Iter 33: Best Score -0.31
+ABC Iter 34: Best Score -0.31
+ABC Iter 35: Best Score -0.31
+ABC Iter 36: Best Score -0.31
+ABC Iter 37: Best Score -0.31
+ABC Iter 38: Best Score -0.31
+ABC Iter 39: Best Score -0.31
+ABC Iter 0: Best Score -0.42
+ABC Iter 1: Best Score -0.40
+ABC Iter 2: Best Score -0.36
+ABC Iter 3: Best Score -0.36
+ABC Iter 4: Best Score -0.34
+ABC Iter 5: Best Score -0.34
+ABC Iter 6: Best Score -0.34
+ABC Iter 7: Best Score -0.32
+ABC Iter 8: Best Score -0.31
+ABC Iter 9: Best Score -0.31
+ABC Iter 10: Best Score -0.31
+ABC Iter 11: Best Score -0.31
+ABC Iter 12: Best Score -0.31
+ABC Iter 13: Best Score -0.31
+ABC Iter 14: Best Score -0.31
+ABC Iter 15: Best Score -0.31
+ABC Iter 16: Best Score -0.31
+ABC Iter 17: Best Score -0.31
+ABC Iter 18: Best Score -0.31
+ABC Iter 19: Best Score -0.31
+ABC Iter 20: Best Score -0.31
+ABC Iter 21: Best Score -0.31
+ABC Iter 22: Best Score -0.31
+ABC Iter 23: Best Score -0.31
+ABC Iter 24: Best Score -0.31
+ABC Iter 25: Best Score -0.31
+ABC Iter 26: Best Score -0.31
+ABC Iter 27: Best Score -0.31
+ABC Iter 28: Best Score -0.31
+ABC Iter 29: Best Score -0.31
+ABC Iter 30: Best Score -0.31
+ABC Iter 31: Best Score -0.31
+ABC Iter 32: Best Score -0.31
+ABC Iter 33: Best Score -0.31
+ABC Iter 34: Best Score -0.31
+ABC Iter 35: Best Score -0.31
+ABC Iter 36: Best Score -0.31
+ABC Iter 37: Best Score -0.31
+ABC Iter 38: Best Score -0.31
+ABC Iter 39: Best Score -0.31
+ Done in 7670.2s total.
+  > Running Transformer...C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score -0.57 (Depth: 9)
+Transformer Iter 0: New Best Score -0.44 (Depth: 18)
+Transformer Iter 1: New Best Score -0.43 (Depth: 4)
+Transformer Iter 1: New Best Score -0.36 (Depth: 4)
+Transformer Iter 2: New Best Score -0.34 (Depth: 6)
+Transformer Iter 2: New Best Score -0.34 (Depth: 4)
+Transformer Iter 3: New Best Score -0.33 (Depth: 11)
+Transformer Iter 4: New Best Score -0.31 (Depth: 7)
+Transformer Iter 4: New Best Score -0.30 (Depth: 13)
+Transformer Iter 26: New Best Score -0.30 (Depth: 6)
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score -0.94 (Depth: 13)
+Transformer Iter 0: New Best Score -0.46 (Depth: 6)
+Transformer Iter 0: New Best Score -0.38 (Depth: 4)
+Transformer Iter 1: New Best Score -0.33 (Depth: 9)
+Transformer Iter 10: New Best Score -0.33 (Depth: 26)
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score -1.95 (Depth: 2)
+Transformer Iter 0: New Best Score -1.73 (Depth: 3)
+Transformer Iter 0: New Best Score -0.36 (Depth: 4)
+Transformer Iter 9: New Best Score -0.36 (Depth: 15)
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score -0.39 (Depth: 7)
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score -2.38 (Depth: 3)
+Transformer Iter 0: New Best Score -0.38 (Depth: 3)
+Transformer Iter 2: New Best Score -0.35 (Depth: 20)
+Transformer Iter 5: New Best Score -0.32 (Depth: 43)
+Transformer Iter 14: New Best Score -0.32 (Depth: 13)
+Transformer Iter 18: New Best Score -0.31 (Depth: 9)
+ Done in 6911.9s total.
+
+>>> TASK: BREAST_CANCER
+  > Running Simulated Annealing...iter 0: New Best! Score 93.41
+iter 2: New Best! Score 95.60
+iter 25: New Best! Score 96.70
+iter 25: New Best! Score 98.90
+iter 13: New Best! Score 92.31
+iter 14: New Best! Score 93.41
+iter 18: New Best! Score 96.70
+iter 29: New Best! Score 97.80
+iter 0: New Best! Score 92.31
+iter 2: New Best! Score 93.41
+iter 7: New Best! Score 96.70
+iter 30: New Best! Score 97.80
+iter 0: New Best! Score 93.41
+iter 1: New Best! Score 97.80
+ Done in 5.9s total.
+  > Running ABC Algorithm...ABC Iter 0: Best Score 97.80
+ABC Iter 1: Best Score 97.80
+ABC Iter 2: Best Score 97.80
+ABC Iter 3: Best Score 97.80
+ABC Iter 4: Best Score 97.80
+ABC Iter 5: Best Score 97.80
+ABC Iter 6: Best Score 97.80
+ABC Iter 7: Best Score 97.80
+ABC Iter 8: Best Score 98.90
+ABC Iter 9: Best Score 98.90
+ABC Iter 10: Best Score 98.90
+ABC Iter 11: Best Score 98.90
+ABC Iter 12: Best Score 98.90
+ABC Iter 13: Best Score 98.90
+ABC Iter 14: Best Score 98.90
+ABC Iter 15: Best Score 98.90
+ABC Iter 16: Best Score 98.90
+ABC Iter 17: Best Score 98.90
+ABC Iter 18: Best Score 98.90
+ABC Iter 19: Best Score 98.90
+ABC Iter 20: Best Score 98.90
+ABC Iter 21: Best Score 98.90
+ABC Iter 22: Best Score 98.90
+ABC Iter 23: Best Score 98.90
+ABC Iter 24: Best Score 98.90
+ABC Iter 25: Best Score 98.90
+ABC Iter 26: Best Score 98.90
+ABC Iter 27: Best Score 98.90
+ABC Iter 28: Best Score 98.90
+ABC Iter 29: Best Score 98.90
+ABC Iter 30: Best Score 98.90
+ABC Iter 31: Best Score 98.90
+ABC Iter 32: Best Score 98.90
+ABC Iter 33: Best Score 98.90
+ABC Iter 34: Best Score 98.90
+ABC Iter 35: Best Score 98.90
+ABC Iter 36: Best Score 98.90
+ABC Iter 37: Best Score 98.90
+ABC Iter 38: Best Score 98.90
+ABC Iter 39: Best Score 98.90
+ABC Iter 0: Best Score 97.80
+ABC Iter 1: Best Score 97.80
+ABC Iter 2: Best Score 97.80
+ABC Iter 3: Best Score 98.90
+ABC Iter 4: Best Score 98.90
+ABC Iter 5: Best Score 98.90
+ABC Iter 6: Best Score 98.90
+ABC Iter 7: Best Score 98.90
+ABC Iter 8: Best Score 98.90
+ABC Iter 9: Best Score 98.90
+ABC Iter 10: Best Score 98.90
+ABC Iter 11: Best Score 98.90
+ABC Iter 12: Best Score 98.90
+ABC Iter 13: Best Score 98.90
+ABC Iter 14: Best Score 98.90
+ABC Iter 15: Best Score 98.90
+ABC Iter 16: Best Score 98.90
+ABC Iter 17: Best Score 98.90
+ABC Iter 18: Best Score 98.90
+ABC Iter 19: Best Score 98.90
+ABC Iter 20: Best Score 98.90
+ABC Iter 21: Best Score 98.90
+ABC Iter 22: Best Score 98.90
+ABC Iter 23: Best Score 98.90
+ABC Iter 24: Best Score 98.90
+ABC Iter 25: Best Score 98.90
+ABC Iter 26: Best Score 98.90
+ABC Iter 27: Best Score 98.90
+ABC Iter 28: Best Score 98.90
+ABC Iter 29: Best Score 98.90
+ABC Iter 30: Best Score 98.90
+ABC Iter 31: Best Score 98.90
+ABC Iter 32: Best Score 98.90
+ABC Iter 33: Best Score 98.90
+ABC Iter 34: Best Score 98.90
+ABC Iter 35: Best Score 98.90
+ABC Iter 36: Best Score 98.90
+ABC Iter 37: Best Score 98.90
+ABC Iter 38: Best Score 98.90
+ABC Iter 39: Best Score 98.90
+ABC Iter 0: Best Score 98.90
+ABC Iter 1: Best Score 98.90
+ABC Iter 2: Best Score 100.00
+ABC Iter 3: Best Score 100.00
+ABC Iter 4: Best Score 100.00
+ABC Iter 5: Best Score 100.00
+ABC Iter 6: Best Score 100.00
+ABC Iter 7: Best Score 100.00
+ABC Iter 8: Best Score 100.00
+ABC Iter 9: Best Score 100.00
+ABC Iter 10: Best Score 100.00
+ABC Iter 11: Best Score 100.00
+ABC Iter 12: Best Score 100.00
+ABC Iter 13: Best Score 100.00
+ABC Iter 14: Best Score 100.00
+ABC Iter 15: Best Score 100.00
+ABC Iter 16: Best Score 100.00
+ABC Iter 17: Best Score 100.00
+ABC Iter 18: Best Score 100.00
+ABC Iter 19: Best Score 100.00
+ABC Iter 20: Best Score 100.00
+ABC Iter 21: Best Score 100.00
+ABC Iter 22: Best Score 100.00
+ABC Iter 23: Best Score 100.00
+ABC Iter 24: Best Score 100.00
+ABC Iter 25: Best Score 100.00
+ABC Iter 26: Best Score 100.00
+ABC Iter 27: Best Score 100.00
+ABC Iter 28: Best Score 100.00
+ABC Iter 29: Best Score 100.00
+ABC Iter 30: Best Score 100.00
+ABC Iter 31: Best Score 100.00
+ABC Iter 32: Best Score 100.00
+ABC Iter 33: Best Score 100.00
+ABC Iter 34: Best Score 100.00
+ABC Iter 35: Best Score 100.00
+ABC Iter 36: Best Score 100.00
+ABC Iter 37: Best Score 100.00
+ABC Iter 38: Best Score 100.00
+ABC Iter 39: Best Score 100.00
+ABC Iter 0: Best Score 97.80
+ABC Iter 1: Best Score 97.80
+ABC Iter 2: Best Score 97.80
+ABC Iter 3: Best Score 97.80
+ABC Iter 4: Best Score 97.80
+ABC Iter 5: Best Score 97.80
+ABC Iter 6: Best Score 97.80
+ABC Iter 7: Best Score 97.80
+ABC Iter 8: Best Score 97.80
+ABC Iter 9: Best Score 97.80
+ABC Iter 10: Best Score 97.80
+ABC Iter 11: Best Score 97.80
+ABC Iter 12: Best Score 97.80
+ABC Iter 13: Best Score 97.80
+ABC Iter 14: Best Score 97.80
+ABC Iter 15: Best Score 97.80
+ABC Iter 16: Best Score 97.80
+ABC Iter 17: Best Score 97.80
+ABC Iter 18: Best Score 97.80
+ABC Iter 19: Best Score 97.80
+ABC Iter 20: Best Score 97.80
+ABC Iter 21: Best Score 97.80
+ABC Iter 22: Best Score 97.80
+ABC Iter 23: Best Score 97.80
+ABC Iter 24: Best Score 97.80
+ABC Iter 25: Best Score 97.80
+ABC Iter 26: Best Score 97.80
+ABC Iter 27: Best Score 97.80
+ABC Iter 28: Best Score 97.80
+ABC Iter 29: Best Score 97.80
+ABC Iter 30: Best Score 97.80
+ABC Iter 31: Best Score 97.80
+ABC Iter 32: Best Score 97.80
+ABC Iter 33: Best Score 97.80
+ABC Iter 34: Best Score 97.80
+ABC Iter 35: Best Score 97.80
+ABC Iter 36: Best Score 97.80
+ABC Iter 37: Best Score 97.80
+ABC Iter 38: Best Score 97.80
+ABC Iter 39: Best Score 97.80
+ABC Iter 0: Best Score 96.70
+ABC Iter 1: Best Score 96.70
+ABC Iter 2: Best Score 96.70
+ABC Iter 3: Best Score 96.70
+ABC Iter 4: Best Score 96.70
+ABC Iter 5: Best Score 96.70
+ABC Iter 6: Best Score 96.70
+ABC Iter 7: Best Score 96.70
+ABC Iter 8: Best Score 96.70
+ABC Iter 9: Best Score 98.90
+ABC Iter 10: Best Score 98.90
+ABC Iter 11: Best Score 98.90
+ABC Iter 12: Best Score 98.90
+ABC Iter 13: Best Score 98.90
+ABC Iter 14: Best Score 98.90
+ABC Iter 15: Best Score 98.90
+ABC Iter 16: Best Score 98.90
+ABC Iter 17: Best Score 98.90
+ABC Iter 18: Best Score 98.90
+ABC Iter 19: Best Score 98.90
+ABC Iter 20: Best Score 98.90
+ABC Iter 21: Best Score 98.90
+ABC Iter 22: Best Score 98.90
+ABC Iter 23: Best Score 98.90
+ABC Iter 24: Best Score 98.90
+ABC Iter 25: Best Score 98.90
+ABC Iter 26: Best Score 98.90
+ABC Iter 27: Best Score 98.90
+ABC Iter 28: Best Score 98.90
+ABC Iter 29: Best Score 98.90
+ABC Iter 30: Best Score 98.90
+ABC Iter 31: Best Score 98.90
+ABC Iter 32: Best Score 98.90
+ABC Iter 33: Best Score 98.90
+ABC Iter 34: Best Score 98.90
+ABC Iter 35: Best Score 98.90
+ABC Iter 36: Best Score 98.90
+ABC Iter 37: Best Score 98.90
+ABC Iter 38: Best Score 98.90
+ABC Iter 39: Best Score 98.90
+ Done in 233.7s total.
+  > Running Transformer...C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score 91.21 (Depth: 3)
+Transformer Iter 0: New Best Score 94.51 (Depth: 15)
+Transformer Iter 1: New Best Score 95.60 (Depth: 5)
+Transformer Iter 3: New Best Score 97.80 (Depth: 13)
+Transformer Iter 4: New Best Score 98.90 (Depth: 4)
+Transformer Iter 7: New Best Score 100.00 (Depth: 15)
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score 63.74 (Depth: 23)
+Transformer Iter 0: New Best Score 92.31 (Depth: 2)
+Transformer Iter 3: New Best Score 93.41 (Depth: 3)
+Transformer Iter 5: New Best Score 94.51 (Depth: 3)
+Transformer Iter 8: New Best Score 95.60 (Depth: 2)
+Transformer Iter 27: New Best Score 96.70 (Depth: 6)
+Transformer Iter 29: New Best Score 97.80 (Depth: 3)
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score 94.51 (Depth: 6)
+Transformer Iter 0: New Best Score 96.70 (Depth: 3)
+Transformer Iter 7: New Best Score 97.80 (Depth: 8)
+Transformer Iter 9: New Best Score 98.90 (Depth: 7)
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score 84.62 (Depth: 20)
+Transformer Iter 0: New Best Score 97.80 (Depth: 8)
+Transformer Iter 2: New Best Score 98.90 (Depth: 11)
+Transformer Iter 2: New Best Score 100.00 (Depth: 9)
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+Transformer Iter 0: New Best Score 98.90 (Depth: 8)
+ Done in 424.0s total.
+
+>>> TASK: FASHION_MNIST_SIMPLE
+  > Running Simulated Annealing...Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz to ./data\FashionMNIST\raw\train-images-idx3-ubyte.gz
+100.0%
+Extracting ./data\FashionMNIST\raw\train-images-idx3-ubyte.gz to ./data\FashionMNIST\raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-labels-idx1-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-labels-idx1-ubyte.gz to ./data\FashionMNIST\raw\train-labels-idx1-ubyte.gz
+100.0%
+Extracting ./data\FashionMNIST\raw\train-labels-idx1-ubyte.gz to ./data\FashionMNIST\raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-images-idx3-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-images-idx3-ubyte.gz to ./data\FashionMNIST\raw\t10k-images-idx3-ubyte.gz
+100.0%
+Extracting ./data\FashionMNIST\raw\t10k-images-idx3-ubyte.gz to ./data\FashionMNIST\raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-labels-idx1-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-labels-idx1-ubyte.gz to ./data\FashionMNIST\raw\t10k-labels-idx1-ubyte.gz
+100.0%
+Extracting ./data\FashionMNIST\raw\t10k-labels-idx1-ubyte.gz to ./data\FashionMNIST\raw
+
+iter 0: New Best! Score 83.75
+iter 0: New Best! Score 83.75
+iter 0: New Best! Score 82.50
+iter 17: New Best! Score 83.00
+iter 23: New Best! Score 83.25
+iter 39: New Best! Score 83.50
+iter 0: New Best! Score 84.00
+iter 6: New Best! Score 85.25
+iter 4: New Best! Score 83.50
+ Done in 36.6s total.
+  > Running ABC Algorithm...ABC Iter 0: Best Score 86.75
+ABC Iter 1: Best Score 86.75
+ABC Iter 2: Best Score 86.75
+ABC Iter 3: Best Score 86.75
+ABC Iter 4: Best Score 86.75
+ABC Iter 5: Best Score 86.75
+ABC Iter 6: Best Score 86.75
+ABC Iter 7: Best Score 86.75
+ABC Iter 8: Best Score 86.75
+ABC Iter 9: Best Score 86.75
+ABC Iter 10: Best Score 86.75
+ABC Iter 11: Best Score 86.75
+ABC Iter 12: Best Score 86.75
+ABC Iter 13: Best Score 86.75
+ABC Iter 14: Best Score 86.75
+ABC Iter 15: Best Score 87.25
+ABC Iter 16: Best Score 87.25
+ABC Iter 17: Best Score 87.25
+ABC Iter 18: Best Score 87.25
+ABC Iter 19: Best Score 87.25
+ABC Iter 20: Best Score 87.25
+ABC Iter 21: Best Score 87.25
+ABC Iter 22: Best Score 87.25
+ABC Iter 23: Best Score 87.25
+ABC Iter 24: Best Score 87.25
+ABC Iter 25: Best Score 87.25
+ABC Iter 26: Best Score 87.25
+ABC Iter 27: Best Score 87.25
+ABC Iter 28: Best Score 87.25
+ABC Iter 29: Best Score 87.25
+ABC Iter 30: Best Score 87.25
+ABC Iter 31: Best Score 87.25
+ABC Iter 32: Best Score 87.25
+ABC Iter 33: Best Score 87.25
+ABC Iter 34: Best Score 87.25
+ABC Iter 35: Best Score 87.25
+ABC Iter 36: Best Score 87.25
+ABC Iter 37: Best Score 87.25
+ABC Iter 38: Best Score 87.25
+ABC Iter 39: Best Score 87.25
+ABC Iter 0: Best Score 86.50
+ABC Iter 1: Best Score 86.50
+ABC Iter 2: Best Score 86.50
+ABC Iter 3: Best Score 86.75
+ABC Iter 4: Best Score 86.75
+ABC Iter 5: Best Score 86.75
+ABC Iter 6: Best Score 87.00
+ABC Iter 7: Best Score 87.00
+ABC Iter 8: Best Score 87.00
+ABC Iter 9: Best Score 87.00
+ABC Iter 10: Best Score 87.00
+ABC Iter 11: Best Score 87.00
+ABC Iter 12: Best Score 87.00
+ABC Iter 13: Best Score 87.00
+ABC Iter 14: Best Score 87.00
+ABC Iter 15: Best Score 87.00
+ABC Iter 16: Best Score 87.00
+ABC Iter 17: Best Score 87.00
+ABC Iter 18: Best Score 87.00
+ABC Iter 19: Best Score 87.00
+ABC Iter 20: Best Score 87.25
+ABC Iter 21: Best Score 87.50
+ABC Iter 22: Best Score 87.50
+ABC Iter 23: Best Score 87.50
+ABC Iter 24: Best Score 87.50
+ABC Iter 25: Best Score 87.50
+ABC Iter 26: Best Score 87.50
+ABC Iter 27: Best Score 87.50
+ABC Iter 28: Best Score 87.50
+ABC Iter 29: Best Score 87.50
+ABC Iter 30: Best Score 87.50
+ABC Iter 31: Best Score 87.50
+ABC Iter 32: Best Score 87.50
+ABC Iter 33: Best Score 87.50
+ABC Iter 34: Best Score 88.75
+ABC Iter 35: Best Score 88.75
+ABC Iter 36: Best Score 88.75
+ABC Iter 37: Best Score 88.75
+ABC Iter 38: Best Score 88.75
+ABC Iter 39: Best Score 88.75
+ABC Iter 0: Best Score 85.75
+ABC Iter 1: Best Score 86.00
+ABC Iter 2: Best Score 86.25
+ABC Iter 3: Best Score 86.75
+ABC Iter 4: Best Score 86.75
+ABC Iter 5: Best Score 86.75
+ABC Iter 6: Best Score 86.75
+ABC Iter 7: Best Score 86.75
+ABC Iter 8: Best Score 86.75
+ABC Iter 9: Best Score 87.00
+ABC Iter 10: Best Score 87.00
+ABC Iter 11: Best Score 87.00
+ABC Iter 12: Best Score 87.00
+ABC Iter 13: Best Score 87.00
+ABC Iter 14: Best Score 87.00
+ABC Iter 15: Best Score 87.00
+ABC Iter 16: Best Score 87.00
+ABC Iter 17: Best Score 87.00
+ABC Iter 18: Best Score 87.00
+ABC Iter 19: Best Score 87.00
+ABC Iter 20: Best Score 87.00
+ABC Iter 21: Best Score 87.00
+ABC Iter 22: Best Score 87.00
+ABC Iter 23: Best Score 87.00
+ABC Iter 24: Best Score 87.00
+ABC Iter 25: Best Score 87.25
+ABC Iter 26: Best Score 87.25
+ABC Iter 27: Best Score 87.25
+ABC Iter 28: Best Score 87.25
+ABC Iter 29: Best Score 87.25
+ABC Iter 30: Best Score 87.25
+ABC Iter 31: Best Score 87.25
+ABC Iter 32: Best Score 87.25
+ABC Iter 33: Best Score 87.25
+ABC Iter 34: Best Score 87.25
+ABC Iter 35: Best Score 88.00
+ABC Iter 36: Best Score 88.00
+ABC Iter 37: Best Score 88.00
+ABC Iter 38: Best Score 88.00
+ABC Iter 39: Best Score 88.00
+ABC Iter 0: Best Score 86.00
+ABC Iter 1: Best Score 86.00
+ABC Iter 2: Best Score 86.75
+ABC Iter 3: Best Score 86.75
+ABC Iter 4: Best Score 86.75
+ABC Iter 5: Best Score 86.75
+ABC Iter 6: Best Score 87.25
+ABC Iter 7: Best Score 87.25
+ABC Iter 8: Best Score 87.25
+ABC Iter 9: Best Score 87.25
+ABC Iter 10: Best Score 87.25
+ABC Iter 11: Best Score 87.25
+ABC Iter 12: Best Score 87.25
+ABC Iter 13: Best Score 87.25
+ABC Iter 14: Best Score 87.25
+ABC Iter 15: Best Score 87.25
+ABC Iter 16: Best Score 87.25
+ABC Iter 17: Best Score 87.25
+ABC Iter 18: Best Score 87.25
+ABC Iter 19: Best Score 87.25
+ABC Iter 20: Best Score 87.25
+ABC Iter 21: Best Score 87.25
+ABC Iter 22: Best Score 87.25
+ABC Iter 23: Best Score 87.25
+ABC Iter 24: Best Score 87.25
+ABC Iter 25: Best Score 87.25
+ABC Iter 26: Best Score 87.25
+ABC Iter 27: Best Score 87.25
+ABC Iter 28: Best Score 87.25
+ABC Iter 29: Best Score 87.25
+ABC Iter 30: Best Score 87.25
+ABC Iter 31: Best Score 87.25
+ABC Iter 32: Best Score 87.25
+ABC Iter 33: Best Score 87.25
+ABC Iter 34: Best Score 87.25
+ABC Iter 35: Best Score 87.25
+ABC Iter 36: Best Score 87.25
+ABC Iter 37: Best Score 87.25
+ABC Iter 38: Best Score 87.25
+ABC Iter 39: Best Score 87.25
+ABC Iter 0: Best Score 83.00
+ABC Iter 1: Best Score 84.00
+ABC Iter 2: Best Score 84.00
+ABC Iter 3: Best Score 84.00
+ABC Iter 4: Best Score 84.00
+ABC Iter 5: Best Score 84.00
+ABC Iter 6: Best Score 84.00
+ABC Iter 7: Best Score 84.00
+ABC Iter 8: Best Score 84.00
+ABC Iter 9: Best Score 84.00
+ABC Iter 10: Best Score 84.00
+ABC Iter 11: Best Score 84.00
+ABC Iter 12: Best Score 84.00
+ABC Iter 13: Best Score 84.25
+ABC Iter 14: Best Score 84.25
+ABC Iter 15: Best Score 84.25
+ABC Iter 16: Best Score 84.25
+ABC Iter 17: Best Score 84.25
+ABC Iter 18: Best Score 84.25
+ABC Iter 19: Best Score 84.25
+ABC Iter 20: Best Score 84.25
+ABC Iter 21: Best Score 84.25
+ABC Iter 22: Best Score 84.25
+ABC Iter 23: Best Score 84.25
+ABC Iter 24: Best Score 84.25
+ABC Iter 25: Best Score 85.00
+ABC Iter 26: Best Score 85.00
+ABC Iter 27: Best Score 85.00
+ABC Iter 28: Best Score 85.00
+ABC Iter 29: Best Score 85.00
+ABC Iter 30: Best Score 85.00
+ABC Iter 31: Best Score 85.00
+ABC Iter 32: Best Score 85.00
+ABC Iter 33: Best Score 85.00
+ABC Iter 34: Best Score 85.00
+ABC Iter 35: Best Score 85.00
+ABC Iter 36: Best Score 85.00
+ABC Iter 37: Best Score 85.00
+ABC Iter 38: Best Score 85.00
+ABC Iter 39: Best Score 85.00
+ Done in 1393.4s total.
+  > Running Transformer...Transformer Iter 0: New Best Score 68.25 (Depth: 13)
+Transformer Iter 0: New Best Score 76.25 (Depth: 20)
+Transformer Iter 0: New Best Score 77.50 (Depth: 4)
+Transformer Iter 0: New Best Score 81.00 (Depth: 4)
+Transformer Iter 0: New Best Score 81.25 (Depth: 7)
+Transformer Iter 2: New Best Score 81.50 (Depth: 8)
+Transformer Iter 3: New Best Score 81.75 (Depth: 4)
+Transformer Iter 3: New Best Score 83.75 (Depth: 7)
+Transformer Iter 4: New Best Score 84.75 (Depth: 7)
+Transformer Iter 15: New Best Score 85.50 (Depth: 6)
+Transformer Iter 0: New Best Score 80.00 (Depth: 2)
+Transformer Iter 0: New Best Score 80.25 (Depth: 6)
+Transformer Iter 0: New Best Score 82.00 (Depth: 4)
+Transformer Iter 0: New Best Score 82.50 (Depth: 4)
+Transformer Iter 1: New Best Score 82.75 (Depth: 11)
+Transformer Iter 1: New Best Score 83.75 (Depth: 3)
+Transformer Iter 3: New Best Score 84.00 (Depth: 4)
+Transformer Iter 6: New Best Score 84.75 (Depth: 8)
+Transformer Iter 8: New Best Score 85.50 (Depth: 5)
+Transformer Iter 39: New Best Score 86.50 (Depth: 7)
+Transformer Iter 0: New Best Score 52.50 (Depth: 12)
+Transformer Iter 0: New Best Score 71.75 (Depth: 6)
+Transformer Iter 0: New Best Score 72.50 (Depth: 16)
+Transformer Iter 0: New Best Score 79.75 (Depth: 3)
+Transformer Iter 0: New Best Score 80.75 (Depth: 6)
+Transformer Iter 1: New Best Score 82.50 (Depth: 6)
+Transformer Iter 4: New Best Score 84.25 (Depth: 6)
+Transformer Iter 0: New Best Score 58.50 (Depth: 9)
+Transformer Iter 0: New Best Score 78.75 (Depth: 4)
+Transformer Iter 0: New Best Score 83.50 (Depth: 3)
+Transformer Iter 2: New Best Score 84.50 (Depth: 3)
+Transformer Iter 2: New Best Score 84.75 (Depth: 5)
+Transformer Iter 3: New Best Score 85.00 (Depth: 5)
+Transformer Iter 10: New Best Score 85.50 (Depth: 3)
+Transformer Iter 10: New Best Score 85.75 (Depth: 3)
+Transformer Iter 11: New Best Score 86.00 (Depth: 3)
+Transformer Iter 14: New Best Score 86.25 (Depth: 3)
+Transformer Iter 0: New Best Score 61.25 (Depth: 12)
+Transformer Iter 0: New Best Score 78.25 (Depth: 7)
+Transformer Iter 0: New Best Score 80.25 (Depth: 4)
+Transformer Iter 0: New Best Score 81.00 (Depth: 3)
+Transformer Iter 1: New Best Score 81.50 (Depth: 8)
+Transformer Iter 2: New Best Score 82.00 (Depth: 4)
+Transformer Iter 2: New Best Score 82.50 (Depth: 3)
+Transformer Iter 3: New Best Score 82.75 (Depth: 3)
+Transformer Iter 5: New Best Score 83.50 (Depth: 4)
+Transformer Iter 9: New Best Score 84.25 (Depth: 3)
+Transformer Iter 12: New Best Score 84.50 (Depth: 3)
+Transformer Iter 25: New Best Score 85.25 (Depth: 11)
+ Done in 809.1s total.
+
+==================================================================================================================================
+TASK                      | ALGORITHM              | PROXY SCORE (Avg±Std) | EVALS  | GAIN     | Δ DEPTH  | TIME(s)
+----------------------------------------------------------------------------------------------------------------------------------
+california_housing        | Simulated Annealing    | -0.37 ± 0.03         | 41     | 0.08     | +1.0     | 33.22
+california_housing        | ABC Algorithm          | -0.31 ± 0.01         | 1736   | 0.14     | +2.6     | 1534.04
+california_housing        | Transformer            | -0.34 ± 0.04         | 641    | 0.11     | +9.6     | 1382.39
+breast_cancer             | Simulated Annealing    | 97.80 ± 0.78         | 41     | 5.71     | +0.2     | 1.18
+breast_cancer             | ABC Algorithm          | 98.90 ± 0.78         | 1788   | 5.49     | +1.0     | 46.73
+breast_cancer             | Transformer            | 99.12 ± 0.92         | 641    | 7.69     | +5.4     | 84.81
+fashion_mnist_simple      | Simulated Annealing    | 83.95 ± 0.74         | 41     | 2.25     | +0.2     | 7.31
+fashion_mnist_simple      | ABC Algorithm          | 87.25 ± 1.40         | 1777   | 3.70     | +1.0     | 278.68
+fashion_mnist_simple      | Transformer            | 85.55 ± 0.89         | 641    | 2.75     | +1.6     | 161.83
+
+--> Benchmark sauvegardé dans 'results/academic_benchmark_technique.json' et 'results/academic_benchmark_summary.txt'
+
+[SUCCESS] C:/Users/ramigon/Downloads/8INF976/code/benchmark_technique.py finished in 294.56 minutes.
+
+========================================
+RUNNING: C:/Users/ramigon/Downloads/8INF976/code/random_search.py
+========================================
+
+cuda
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+
+==================================================
+RANDOM SEARCH - SEED: 42
+==================================================
+Préchargement du proxy sur GPU...
+  fait en 2.2s | train (20000, 3, 32, 32) | val (5000, 3, 32, 32)
+Début Random Search...
+[seed 42] budget lu depuis results/academic_results_hybride_42.json : 689 évaluations
+C:\Users\ramigon\.conda\envs\pytorch_gpu\Lib\site-packages\torch\nn\modules\transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(
+RS eval 1: nouveau best 53.36 (profondeur 11, 0.4 min)
+RS eval 4: nouveau best 62.42 (profondeur 8, 0.4 min)
+RS eval 40: nouveau best 65.88 (profondeur 9, 1.5 min)
+RS eval 408: nouveau best 69.24 (profondeur 10, 15.5 min)
+Bilan recherche : 689 évaluations (27 invalides) en 0.40 h | best proxy = 69.24
+Entraînement final (100 Epochs)...
+--> Accuracy finale Seed 42 : 84.81% | 68,010 paramètres
+
+==================================================
+RANDOM SEARCH - SEED: 43
+==================================================
+Préchargement du proxy sur GPU...
+  fait en 2.1s | train (20000, 3, 32, 32) | val (5000, 3, 32, 32)
+Début Random Search...
+[seed 43] budget lu depuis results/academic_results_hybride_43.json : 685 évaluations
+RS eval 1: nouveau best 49.20 (profondeur 14, 0.1 min)
+RS eval 5: nouveau best 57.32 (profondeur 7, 0.4 min)
+RS eval 22: nouveau best 58.34 (profondeur 8, 0.8 min)
+RS eval 23: nouveau best 58.76 (profondeur 8, 0.9 min)
+RS eval 29: nouveau best 61.98 (profondeur 15, 1.1 min)
+RS eval 74: nouveau best 62.08 (profondeur 5, 2.8 min)
+RS eval 144: nouveau best 63.00 (profondeur 15, 5.6 min)
+RS eval 146: nouveau best 66.34 (profondeur 10, 5.7 min)
+RS eval 246: nouveau best 66.44 (profondeur 12, 9.1 min)
+Bilan recherche : 685 évaluations (23 invalides) en 0.43 h | best proxy = 66.44
+Entraînement final (100 Epochs)...
+--> Accuracy finale Seed 43 : 82.18% | 171,466 paramètres
+
+==================================================
+RANDOM SEARCH - SEED: 44
+==================================================
+Préchargement du proxy sur GPU...
+  fait en 2.0s | train (20000, 3, 32, 32) | val (5000, 3, 32, 32)
+Début Random Search...
+[seed 44] budget lu depuis results/academic_results_hybride_44.json : 946 évaluations
+RS eval 1: nouveau best 39.52 (profondeur 10, 0.0 min)
+RS eval 2: nouveau best 52.62 (profondeur 10, 0.1 min)
+RS eval 4: nouveau best 60.78 (profondeur 13, 0.4 min)
+RS eval 10: nouveau best 60.94 (profondeur 10, 0.6 min)
+RS eval 40: nouveau best 64.02 (profondeur 13, 1.2 min)
+RS eval 124: nouveau best 66.60 (profondeur 12, 5.9 min)
+Bilan recherche : 946 évaluations (38 invalides) en 0.63 h | best proxy = 66.60
+Entraînement final (100 Epochs)...
+--> Accuracy finale Seed 44 : 83.53% | 161,226 paramètres
+
+Moyenne: 83.51% ± 1.32%
+
+[SUCCESS] C:/Users/ramigon/Downloads/8INF976/code/random_search.py finished in 124.03 minutes.
+
+==================================================
+ALL EXPERIMENTS COMPLETED IN 18.86 HOURS
+==================================================

@@ -17,8 +17,6 @@ class ResidualWrapper(nn.Module):
         
         if use_projection and in_channels != out_channels:
             self.projection = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-        elif in_channels != out_channels:
-             pass
 
     def forward(self, x):
         identity = x
@@ -26,7 +24,8 @@ class ResidualWrapper(nn.Module):
         if self.projection is not None:
             identity = self.projection(identity)
         if identity.shape != out.shape:
-            return out 
+            # CORRECTION : On lève une erreur au lieu de renvoyer out silencieusement
+            raise RuntimeError(f"Residual shape mismatch: identity {identity.shape} vs out {out.shape}")
         return out + identity
 
 class DynamicNet(nn.Module):
@@ -53,7 +52,7 @@ class DynamicNet(nn.Module):
             elif isinstance(cfg, FlattenCfg):
                 layers.append(nn.Flatten(start_dim=cfg.start_dim))
             elif isinstance(cfg, MaxPool2dCfg):
-                layers.append(nn.MaxPool2d(kernel_size=cfg.kernel_size, stride=cfg.stride, padding=cfg.padding,  ceil_mode=cfg.ceil_mode))
+                layers.append(nn.MaxPool2d(kernel_size=cfg.kernel_size, stride=cfg.stride, padding=cfg.padding, ceil_mode=cfg.ceil_mode))
             elif isinstance(cfg, GlobalAvgPoolCfg):
                 layers.append(nn.AdaptiveAvgPool2d((1, 1)))
                 layers.append(nn.Flatten())
@@ -63,29 +62,20 @@ class DynamicNet(nn.Module):
                 layers.append(nn.BatchNorm2d(cfg.num_features))
             elif isinstance(cfg, ResBlockCfg):
                 inner_seq = self._build_sequential(cfg.sub_layers)
-                in_ch = 0
-                out_ch = 0
+                in_ch, out_ch = 0, 0
                 if len(cfg.sub_layers) > 0:
-                    first = cfg.sub_layers[0]
-                    last = cfg.sub_layers[-1]
+                    first, last = cfg.sub_layers[0], cfg.sub_layers[-1]
                     if hasattr(first, 'in_channels'): in_ch = first.in_channels
                     elif hasattr(first, 'in_features'): in_ch = first.in_features 
                     if hasattr(last, 'out_channels'): out_ch = last.out_channels
                     elif hasattr(last, 'out_features'): out_ch = last.out_features
-                wrapper = ResidualWrapper(inner_seq, cfg.use_projection, in_ch, out_ch)
-                layers.append(wrapper)
+                layers.append(ResidualWrapper(inner_seq, cfg.use_projection, in_ch, out_ch))
         return nn.Sequential(*layers)
 
     def forward(self, x):
         return self.net(x)
-
     def count_parameters(self):
         return sum(p.numel() for p in self.parameters())
-
-    def flatten_weights(self, to_numpy=True, device=None):
-        vec = parameters_to_vector(self.parameters())
-        if to_numpy: return vec.detach().cpu().numpy()
-        return vec.to(device) if device is not None else vec
 
     def load_flattened_weights(self, flat_weights):
         if isinstance(flat_weights, np.ndarray):
@@ -94,35 +84,9 @@ class DynamicNet(nn.Module):
         flat_weights = flat_weights.to(device)
         try:
             vector_to_parameters(flat_weights, self.parameters())
-        except RuntimeError:
-            pass
+        except RuntimeError as e:
+            print(f"Error loading weights: {e}")
 
-    def evaluate_model(self, X, y, loss_fn=nn.MSELoss(), n_warmup=3, n_runs=20, verbose=False):
-        model = self.net
-        model.eval()
-        use_cuda = torch.cuda.is_available()
-        device = "cuda" if use_cuda else "cpu"
-        if next(model.parameters()).device.type != device: model = model.to(device)
-        X, y = X.to(device), y.to(device)
-
-        with torch.no_grad():
-            pred = model(X)
-            loss_value = loss_fn(pred, y).item()
-            for _ in range(n_warmup): _ = model(X)
-            if use_cuda: torch.cuda.synchronize()
-
-        times = []
-        with torch.no_grad():
-            for _ in range(n_runs):
-                t0 = time.perf_counter()
-                _ = model(X)
-                if use_cuda: torch.cuda.synchronize()
-                times.append(time.perf_counter() - t0)
-        
-        inference_time = float(np.median(times))
-        if verbose: print(f"Loss: {loss_value:.6f} | Inference time: {inference_time*1000:.3f} ms")
-        return loss_value, inference_time
-    
     def _reconnect_layers(self, layers, input_shape):
         dummy_input = torch.zeros(1, *input_shape)
         def process_recursive(cfg_list, current_tensor):
@@ -136,11 +100,21 @@ class DynamicNet(nn.Module):
                         layer = nn.Conv2d(cfg.in_channels, cfg.out_channels, cfg.kernel_size, cfg.stride, cfg.padding)
                         x = layer(x)
                         processed.append(cfg)
+                    elif isinstance(cfg, MaxPool2dCfg):
+                        # CORRECTION BUG 1 : Le MaxPooling est maintenant simulé correctement !
+                        layer = nn.MaxPool2d(kernel_size=cfg.kernel_size, stride=cfg.stride, padding=cfg.padding, ceil_mode=cfg.ceil_mode)
+                        x = layer(x)
+                        processed.append(cfg)
                     elif isinstance(cfg, BatchNorm2dCfg):
                         cfg.num_features = x.shape[1]
                         layer = nn.BatchNorm2d(cfg.num_features)
                         x = layer(x)
                         processed.append(cfg)
+                    elif isinstance(cfg, BatchNorm1dCfg):
+                        if len(x.shape) != 2:
+                            raise ValueError("bn1d hors contexte aplati")
+                        cfg.num_features = x.shape[1]
+                        processed.append(cfg)  # ne change pas la shape
                     elif isinstance(cfg, LinearCfg):
                         if len(x.shape) > 2:
                             processed.append(FlattenCfg())
@@ -163,11 +137,13 @@ class DynamicNet(nn.Module):
                         processed.append(cfg)
                     else:
                         processed.append(cfg)
-                except Exception: pass
+                except Exception as e:
+                    raise ValueError(f"Architecture invalide ({type(cfg).__name__}): {e}") from e
             return processed, x
         new_layers, _ = process_recursive(layers, dummy_input)
         return new_layers
-
+    
+    # ... (Garder le reste de votre model.py intact pour l'encodage GNN) ...
     def _encode_config_to_vector(self, cfg, sub_layer_count=0):
         vec = np.zeros(FEATURE_SIZE, dtype=np.float32)
         if isinstance(cfg, Conv2dCfg):

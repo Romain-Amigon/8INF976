@@ -1,0 +1,13 @@
+REAL DATASETS BENCHMARK (Runs: 5 | Iterations: 40)
+==================================================================================================================================
+TASK                      | ALGORITHM              | PROXY SCORE (Avg±Std) | EVALS  | GAIN     | Δ DEPTH  | TIME(s) 
+----------------------------------------------------------------------------------------------------------------------------------
+california_housing        | Simulated Annealing    | -0.37 ± 0.03         | 41     | 0.08     | +1.0     | 33.22   
+california_housing        | ABC Algorithm          | -0.31 ± 0.01         | 1736   | 0.14     | +2.6     | 1534.04 
+california_housing        | Transformer            | -0.34 ± 0.04         | 641    | 0.11     | +9.6     | 1382.39 
+breast_cancer             | Simulated Annealing    | 97.80 ± 0.78         | 41     | 5.71     | +0.2     | 1.18    
+breast_cancer             | ABC Algorithm          | 98.90 ± 0.78         | 1788   | 5.49     | +1.0     | 46.73   
+breast_cancer             | Transformer            | 99.12 ± 0.92         | 641    | 7.69     | +5.4     | 84.81   
+fashion_mnist_simple      | Simulated Annealing    | 83.95 ± 0.74         | 41     | 2.25     | +0.2     | 7.31    
+fashion_mnist_simple      | ABC Algorithm          | 87.25 ± 1.40         | 1777   | 3.70     | +1.0     | 278.68  
+fashion_mnist_simple      | Transformer            | 85.55 ± 0.89         | 641    | 2.75     | +1.6     | 161.83  
